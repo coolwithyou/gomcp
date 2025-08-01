@@ -53,7 +53,9 @@ junit.xml
 test-project/
 
 # Claude Code specific
+.claude
 .claude/
+.serena
 .serena/
 CLAUDE.md
 

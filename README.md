@@ -5,7 +5,7 @@
 [![Node.js Version](https://img.shields.io/node/v/gomcp.svg)](https://nodejs.org)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
 
-> 🚀 Install and manage MCP (Model Context Protocol) servers for Claude Code with an interactive CLI
+> 🚀 **Go MCP!** - From zero to AI superpowers in 30 seconds. Pick your tools, we'll handle the rest.
 
 
 ## Table of Contents
