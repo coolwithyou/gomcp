@@ -27,6 +27,7 @@ import {
   deactivateServers,
   hasClaudeSettings,
   initializeClaudeSettings,
+  ServerActivationStatus,
 } from './activation.js';
 import { getActivationStatus } from './claude-settings.js';
 
@@ -348,15 +349,15 @@ async function collectServerConfig(server: MCPServer): Promise<ServerConfig> {
   return config;
 }
 
-async function promptForOption(option: ConfigOption): Promise<any> {
-  const basePrompt: any = {
+async function promptForOption(option: ConfigOption): Promise<string | boolean | string[]> {
+  const basePrompt: Record<string, unknown> = {
     name: 'value',
     message: option.label,
     default: option.default,
   };
 
   if (option.description) {
-    basePrompt.message += chalk.gray(` (${option.description})`);
+    basePrompt.message = String(basePrompt.message) + chalk.gray(` (${option.description})`);
   }
 
   switch (option.type) {
@@ -398,7 +399,7 @@ async function promptForOption(option: ConfigOption): Promise<any> {
             type: 'input',
             name: 'customPath',
             message: 'Enter custom path:',
-            validate: (input: any) => {
+            validate: (input: string) => {
               try {
                 return input.length > 0 || 'Path cannot be empty';
               } catch (error) {
@@ -438,7 +439,7 @@ async function promptForOption(option: ConfigOption): Promise<any> {
     basePrompt.validate = (input: string) => {
       try {
         // Call the original validate function with the input
-        const validationResult = option.validate!(input);
+        const validationResult = option.validate ? option.validate(input) : true;
         return validationResult;
       } catch (error) {
         console.error(chalk.red(`Validation error for ${option.key}:`), error);
@@ -524,7 +525,7 @@ async function restoreFlow() {
       name: 'backupPath',
       message: 'Enter backup file path:',
       default: defaultPath,
-      validate: (input: any) => {
+      validate: (input: string) => {
         try {
           return input.length > 0 || 'Path cannot be empty';
         } catch (error) {
@@ -679,10 +680,10 @@ async function removeFlow(_defaultScope: InstallScope = 'user') {
   }
 
   // Group by scope for removal
-  const userServers = selectedServers.filter((s: any) => s.scope === 'user').map((s: any) => s.id);
+  const userServers = selectedServers.filter((s: { scope: string }) => s.scope === 'user').map((s: { id: string }) => s.id);
   const projectServers = selectedServers
-    .filter((s: any) => s.scope === 'project')
-    .map((s: any) => s.id);
+    .filter((s: { scope: string }) => s.scope === 'project')
+    .map((s: { id: string }) => s.id);
 
   if (userServers.length > 0) {
     await removeServers(userServers, 'user');
@@ -815,7 +816,7 @@ async function activationManagementFlow() {
   }
 }
 
-async function specificServerActivationFlow(serverStatuses: any[]) {
+async function specificServerActivationFlow(serverStatuses: ServerActivationStatus[]) {
   const inactiveServers = serverStatuses.filter((s) => !s.isActivated);
 
   if (inactiveServers.length === 0) {
@@ -844,7 +845,7 @@ async function specificServerActivationFlow(serverStatuses: any[]) {
   console.log(chalk.gray('Restart Claude Code for changes to take effect.'));
 }
 
-async function permissionsManagementFlow(serverStatuses: any[]) {
+async function permissionsManagementFlow(serverStatuses: ServerActivationStatus[]) {
   const actionResult = await promptWithEscape([
     {
       type: 'list',
@@ -939,7 +940,7 @@ async function permissionsManagementFlow(serverStatuses: any[]) {
   }
 }
 
-async function deactivationFlow(serverStatuses: any[]) {
+async function deactivationFlow(serverStatuses: ServerActivationStatus[]) {
   const activeServers = serverStatuses.filter((s) => s.isActivated);
 
   if (activeServers.length === 0) {
@@ -948,7 +949,7 @@ async function deactivationFlow(serverStatuses: any[]) {
   }
 
   const choices = activeServers.map((server) => ({
-    name: `${getServerIcon(server.id)} ${server.name} (${server.activationType})`,
+    name: `${getServerIcon(server.id)} ${server.name}${server.activationType ? ` (${server.activationType})` : ''}`,
     value: server.id,
   }));
 
