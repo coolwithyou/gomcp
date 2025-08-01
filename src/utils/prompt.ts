@@ -16,7 +16,7 @@ export async function promptWithEscape<T extends Answers = Answers>(
     const enhancedQuestions = modifiedQuestions.map((q: DistinctQuestion) => {
       if (q.type === 'list' && q.choices) {
         // Add back option to list choices
-        const choices = [...(q.choices as any[])];
+        const choices: any[] = [...(q.choices as Array<{ name: string; value: string }>)];
         choices.push(new inquirer.Separator());
         choices.push({ name: '← Back to previous menu', value: '__BACK__' });
 
@@ -83,10 +83,8 @@ export async function checkboxPromptWithEscape<T extends Answers = Answers>(
   } as CheckboxQuestion<T>;
 
   // Copy other properties that might exist but exclude the original validate
-  const questionObj = question as Record<string, any>;
-  const modifiedObj = modifiedQuestion as Record<string, any>;
-  
-  for (const key in questionObj) {
+  const questionObj = question as unknown as Record<string, unknown>;
+  const modifiedObj = modifiedQuestion as unknown as Record<string, unknown>;for (const key in questionObj) {
     if (
       key !== 'validate' &&
       key !== 'type' &&
