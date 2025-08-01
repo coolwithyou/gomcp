@@ -32,7 +32,7 @@ export async function loadConfig(): Promise<GomcpConfig | null> {
   try {
     await ensureConfigDir();
     const data = await fs.readFile(CONFIG_FILE, 'utf-8');
-    return JSON.parse(data);
+    return JSON.parse(data) as GomcpConfig;
   } catch (error) {
     return null;
   }

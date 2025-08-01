@@ -68,8 +68,8 @@ describe('Types', () => {
       expect(textOption.type).toBe('text');
       expect(selectOption.type).toBe('select');
       expect(selectOption.choices).toHaveLength(2);
-      expect(optionWithValidation.validate!('8080')).toBe(true);
-      expect(optionWithValidation.validate!('0')).toBe('Port must be between 1 and 65535');
+      expect(optionWithValidation.validate?.('8080')).toBe(true);
+      expect(optionWithValidation.validate?.('0')).toBe('Port must be between 1 and 65535');
     });
   });
 

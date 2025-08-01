@@ -1,4 +1,4 @@
-import inquirer from 'inquirer';
+import inquirer, { QuestionCollection, Answers } from 'inquirer';
 import chalk from 'chalk';
 import ora from 'ora';
 import { servers } from './servers.js';
@@ -51,7 +51,7 @@ export async function mainMenu(defaultScope: InstallScope = 'user', mode?: strin
     return;
   }
 
-  const result = await promptWithEscape(
+  const result = await promptWithEscape<{ action: string }>(
     [
       {
         type: 'list',
@@ -87,7 +87,7 @@ export async function mainMenu(defaultScope: InstallScope = 'user', mode?: strin
       await installFlow(defaultScope);
       break;
     case 'list':
-      await listInstalledServers('all' as any);
+      await listInstalledServers('all');
       break;
     case 'remove':
       await removeFlow(defaultScope);
@@ -295,7 +295,8 @@ async function installFlow(defaultScope: InstallScope = 'user') {
   const configs: Map<string, ServerConfig> = new Map();
 
   for (const serverId of selectedServers) {
-    const server = servers.find((s) => s.id === serverId)!;
+    const server = servers.find((s) => s.id === serverId);
+    if (!server) continue;
     if (server.requiresConfig && server.configOptions) {
       console.log(chalk.cyan(`\n📝 Configure ${server.name}:`));
       const config = await collectServerConfig(server);
@@ -307,7 +308,8 @@ async function installFlow(defaultScope: InstallScope = 'user') {
   console.log(chalk.bold('\n📋 Installation Summary:'));
   console.log(chalk.gray(`Scope: ${scope === 'user' ? 'User (Global)' : 'Project'}\n`));
   for (const serverId of selectedServers) {
-    const server = servers.find((s) => s.id === serverId)!;
+    const server = servers.find((s) => s.id === serverId);
+    if (!server) continue;
     const icon = getServerIcon(serverId);
     console.log(`  ${icon} ${server.name}`);
   }
@@ -433,7 +435,7 @@ async function promptForOption(option: ConfigOption): Promise<any> {
 
   if (option.validate && typeof option.validate === 'function') {
     // Wrap validate function to ensure proper context and error handling
-    basePrompt.validate = (input: any) => {
+    basePrompt.validate = (input: string) => {
       try {
         // Call the original validate function with the input
         const validationResult = option.validate!(input);
@@ -445,7 +447,7 @@ async function promptForOption(option: ConfigOption): Promise<any> {
     };
   }
 
-  const result = await promptWithEscape([basePrompt]);
+  const result = await promptWithEscape<Answers>([basePrompt]);
 
   if (!result) {
     // If user cancels, return default value or empty string

@@ -50,7 +50,7 @@ export async function readClaudeSettings(): Promise<ClaudeLocalSettings | null> 
   try {
     const settingsPath = getSettingsPath();
     const content = await fs.readFile(settingsPath, 'utf-8');
-    return JSON.parse(content);
+    return JSON.parse(content) as ClaudeLocalSettings;
   } catch (error) {
     // File doesn't exist or is invalid
     return null;

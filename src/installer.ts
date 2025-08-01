@@ -165,7 +165,7 @@ async function installServerViaClaude(
 
   // Handle filesystem server special case - add paths as arguments
   if (server.id === 'filesystem' && config?.paths) {
-    commandArgs.push(...config.paths);
+    commandArgs.push(...(config.paths as string[]));
   }
 
   args.push(...commandArgs);

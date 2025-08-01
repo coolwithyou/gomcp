@@ -1,5 +1,4 @@
 import { jest, describe, it, expect, beforeEach, afterEach } from '@jest/globals';
-import * as path from 'path';
 import type { MCPServer, ServerConfig } from '../types';
 
 // Create manual mocks
@@ -50,8 +49,8 @@ const {
   restoreConfig,
 } = await import('../installer');
 
-// Import servers and presets
-import { servers, presets } from '../servers';
+// Import servers
+import { servers } from '../servers';
 
 // Mock console methods
 const originalConsoleLog = console.log;
@@ -189,10 +188,10 @@ describe('Installer', () => {
 
     it('should create backup of configurations', async () => {
       mockFs.access.mockResolvedValue(undefined);
-      mockFs.readFile.mockImplementation(async (path) => {
-        if (typeof path === 'string' && path.includes('.claude/config.json')) {
+      mockFs.readFile.mockImplementation((filePath) => {
+        if (typeof filePath === 'string' && filePath.includes('.claude/config.json')) {
           return JSON.stringify(mockUserConfig);
-        } else if (typeof path === 'string' && path.includes('.mcp.json')) {
+        } else if (typeof filePath === 'string' && filePath.includes('.mcp.json')) {
           return JSON.stringify(mockProjectConfig);
         }
         throw new Error('Not found');

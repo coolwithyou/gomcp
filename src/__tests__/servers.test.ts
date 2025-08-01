@@ -12,7 +12,7 @@ describe('Servers', () => {
         expect(server.description).toBeDefined();
         expect(server.package).toBeDefined();
         expect(typeof server.requiresConfig).toBe('boolean');
-        
+
         // 카테고리 검증
         expect([
           'essential',
@@ -28,7 +28,9 @@ describe('Servers', () => {
         if (server.requiresConfig) {
           expect(server.configOptions).toBeDefined();
           expect(Array.isArray(server.configOptions)).toBe(true);
-          expect(server.configOptions!.length).toBeGreaterThan(0);
+          if (server.configOptions) {
+            expect(server.configOptions.length).toBeGreaterThan(0);
+          }
         }
       });
     });
@@ -44,15 +46,15 @@ describe('Servers', () => {
     it('should include required MCP servers', () => {
       const github = servers.find((s) => s.id === 'github');
       expect(github).toBeDefined();
-      expect(github!.category).toBe('essential');
+      expect(github?.category).toBe('essential');
 
       const fs = servers.find((s) => s.id === 'filesystem');
       expect(fs).toBeDefined();
-      expect(fs!.category).toBe('essential');
+      expect(fs?.category).toBe('essential');
 
       const context7 = servers.find((s) => s.id === 'context7');
       expect(context7).toBeDefined();
-      expect(context7!.category).toBe('essential');
+      expect(context7?.category).toBe('essential');
     });
   });
 
@@ -65,7 +67,7 @@ describe('Servers', () => {
 
       // 모든 프리셋이 유효한 서버 ID를 참조하는지 확인
       const serverIds = servers.map((s) => s.id);
-      Object.entries(presets).forEach(([presetName, serverList]) => {
+      Object.entries(presets).forEach(([_presetName, serverList]) => {
         expect(serverList.length).toBeGreaterThan(0);
         serverList.forEach((serverId) => {
           expect(serverIds).toContain(serverId);

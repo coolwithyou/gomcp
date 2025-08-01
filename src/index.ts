@@ -7,7 +7,6 @@ import {
   installPreset,
   verifyInstallations,
   listInstalledServers,
-  removeServers,
 } from './installer.js';
 import { servers, presets } from './servers.js';
 import { InstallScope } from './types.js';
@@ -18,10 +17,14 @@ import { dirname, join } from 'path';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
-const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8'));
+interface PackageJson {
+  version: string;
+}
+
+const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8')) as PackageJson;
 const version = packageJson.version;
 
-async function main() {
+async function main(): Promise<void> {
   console.log(chalk.cyan.bold('\n🚀 Interactive MCP Setup (gomcp)\n'));
 
   program
@@ -38,7 +41,16 @@ async function main() {
     .option('-a, --activation', 'Show MCP server activation status')
     .option('-s, --scope <scope>', 'Installation scope: user (global) or project', 'user')
     .option('-f, --force', 'Force installation even if scope is not recommended')
-    .action(async (options) => {
+    .action(async (options: {
+      list?: boolean;
+      installed?: boolean | string;
+      remove?: boolean;
+      verify?: boolean;
+      activation?: boolean;
+      preset?: string;
+      scope: string;
+      force?: boolean;
+    }) => {
       try {
         if (options.list) {
           listServers();
@@ -53,9 +65,9 @@ async function main() {
           }
 
           if (scope === 'all' || scope === 'user' || scope === 'project') {
-            await listInstalledServers(scope as any);
+            await listInstalledServers(scope);
           } else {
-            console.error(chalk.red(`Invalid scope: ${scope}`));
+            console.error(chalk.red(`Invalid scope: ${scope as string}`));
             console.log('Valid scopes: user, project, all');
             process.exit(1);
           }

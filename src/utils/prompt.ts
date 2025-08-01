@@ -1,9 +1,9 @@
-import inquirer from 'inquirer';
+import inquirer, { QuestionCollection, Answers, DistinctQuestion, CheckboxQuestion } from 'inquirer';
 import chalk from 'chalk';
 
 // Custom prompt wrapper that handles ESC key
-export async function promptWithEscape<T = any>(
-  questions: any,
+export async function promptWithEscape<T extends Answers = Answers>(
+  questions: QuestionCollection<T>,
   options?: { showEscapeHint?: boolean }
 ): Promise<T | null> {
   // ESC hint removed - we'll use explicit back options instead
@@ -13,7 +13,7 @@ export async function promptWithEscape<T = any>(
     // We'll use a workaround by adding a "← Back" option to list prompts
     const modifiedQuestions = Array.isArray(questions) ? questions : [questions];
 
-    const enhancedQuestions = modifiedQuestions.map((q: any) => {
+    const enhancedQuestions = modifiedQuestions.map((q: DistinctQuestion) => {
       if (q.type === 'list' && q.choices) {
         // Add back option to list choices
         const choices = [...q.choices];
@@ -28,7 +28,7 @@ export async function promptWithEscape<T = any>(
       return q;
     });
 
-    const answers = await inquirer.prompt(enhancedQuestions as any);
+    const answers = await inquirer.prompt(enhancedQuestions as QuestionCollection);
 
     // Check if user selected back option
     for (const key in answers) {
@@ -48,7 +48,7 @@ export async function promptWithEscape<T = any>(
 }
 
 // For checkbox prompts, we need a different approach
-export async function checkboxPromptWithEscape<T = any>(question: any): Promise<T | null> {
+export async function checkboxPromptWithEscape<T extends Answers = Answers>(question: CheckboxQuestion<T>): Promise<T | null> {
   // Add a special back option at the beginning of checkbox choices
   const backOption = {
     name: chalk.gray('← Back to previous menu'),
@@ -70,7 +70,7 @@ export async function checkboxPromptWithEscape<T = any>(question: any): Promise<
   }
 
   // Create modified question with a safe validate function
-  const modifiedQuestion: any = {
+  const modifiedQuestion: CheckboxQuestion = {
     type: question.type,
     name: question.name,
     message: question.message,
@@ -125,7 +125,7 @@ export async function checkboxPromptWithEscape<T = any>(question: any): Promise<
     // Filter out the back option from results
     const filteredResults = {
       ...answers,
-      [question.name as string]: selectedItems.filter((item: any) => item !== '__BACK__'),
+      [question.name as string]: selectedItems.filter((item: string) => item !== '__BACK__'),
     };
 
     return filteredResults as T;

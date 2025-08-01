@@ -1,7 +1,7 @@
 import { jest, describe, it, expect, beforeEach, beforeAll } from '@jest/globals';
 import * as path from 'path';
 import type { MCPServer } from '../types';
-import type { GomcpConfig, InstalledServer } from '../config';
+import type { GomcpConfig } from '../config';
 
 // Create manual mocks
 const mockFs = {
@@ -23,7 +23,7 @@ describe('Config', () => {
   const HOME = '/test-home';
   const CONFIG_DIR = path.join(HOME, '.gomcp');
   const CONFIG_FILE = path.join(CONFIG_DIR, 'config.json');
-  
+
   let loadConfig: any;
   let saveConfig: any;
   let addInstalledServer: any;

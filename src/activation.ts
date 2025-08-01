@@ -77,7 +77,7 @@ export async function getProjectServersActivationStatus(): Promise<ServerActivat
 export async function displayActivationStatus(): Promise<void> {
   console.log(chalk.bold('\n📊 MCP Server Activation Status\n'));
 
-  const settings = await readClaudeSettings();
+  await readClaudeSettings();
   const status = await getActivationStatus();
   const serverStatuses = await getProjectServersActivationStatus();
 
@@ -149,11 +149,12 @@ export async function activateServers(
         spinner.succeed(`Enabled ${serverIds.length} specific server(s)`);
         break;
 
-      case 'permission':
+      case 'permission': {
         const permissions = serverIds.map((id) => `mcp__${id}__*`);
         await addPermissions(permissions);
         spinner.succeed(`Added wildcard permissions for ${serverIds.length} server(s)`);
         break;
+      }
     }
   } catch (error) {
     spinner.fail('Failed to activate servers');
