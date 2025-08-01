@@ -23,7 +23,7 @@ export const servers: MCPServer[] = [
         label: 'GitHub Personal Access Token',
         description: 'Create at https://github.com/settings/tokens',
         required: true,
-        validate: (value: string) => {
+        validate: (value: unknown) => {
           if (!value || typeof value !== 'string') {
             return 'GitHub token is required';
           }
@@ -100,7 +100,7 @@ export const servers: MCPServer[] = [
         label: 'Database URL',
         description: 'PostgreSQL connection string (postgres://...)',
         required: true,
-        validate: (value: string) => {
+        validate: (value: unknown) => {
           if (!value || typeof value !== 'string') {
             return 'Must be a valid PostgreSQL URL';
           }
@@ -219,7 +219,7 @@ export const servers: MCPServer[] = [
         label: 'Slack Bot Token',
         description: 'Bot User OAuth Token (xoxb-...)',
         required: true,
-        validate: (value: string) => {
+        validate: (value: unknown) => {
           if (!value || typeof value !== 'string') {
             return 'Must be a valid bot token';
           }
@@ -232,7 +232,7 @@ export const servers: MCPServer[] = [
         label: 'Slack App Token',
         description: 'App-Level Token (xapp-...)',
         required: true,
-        validate: (value: string) => {
+        validate: (value: unknown) => {
           if (!value || typeof value !== 'string') {
             return 'Must be a valid app token';
           }
@@ -259,7 +259,7 @@ export const servers: MCPServer[] = [
         label: 'Notion Integration Token',
         description: 'Create at https://www.notion.so/my-integrations',
         required: true,
-        validate: (value: string) => {
+        validate: (value: unknown) => {
           if (!value || typeof value !== 'string') {
             return 'Must be a valid Notion token';
           }
@@ -344,7 +344,7 @@ export const servers: MCPServer[] = [
         label: 'Stripe Secret Key',
         description: 'Starts with sk_live_ or sk_test_',
         required: true,
-        validate: (value: string) => {
+        validate: (value: unknown) => {
           if (!value || typeof value !== 'string') {
             return 'Must be a valid Stripe secret key';
           }
