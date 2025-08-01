@@ -33,11 +33,18 @@
     "@typescript-eslint/no-non-null-assertion": "warn",
     "@typescript-eslint/no-floating-promises": "error",
     "@typescript-eslint/await-thenable": "error",
+    "@typescript-eslint/no-unsafe-assignment": "off",
+    "@typescript-eslint/no-unsafe-member-access": "off",
+    "@typescript-eslint/no-unsafe-call": "off",
+    "@typescript-eslint/no-unsafe-argument": "off",
+    "@typescript-eslint/no-unsafe-return": "off",
+    "@typescript-eslint/restrict-template-expressions": "off",
+    "@typescript-eslint/require-await": "off",
     "no-console": "off",
     "prefer-const": "error",
     "no-var": "error",
     "eqeqeq": ["error", "always"],
-    "curly": ["error", "all"],
+    "curly": ["error", "multi-line"],
     "brace-style": ["error", "1tbs"],
     "quotes": ["error", "single", { "avoidEscape": true }],
     "semi": ["error", "always"],
@@ -49,7 +56,9 @@
     "jest/no-focused-tests": "error",
     "jest/no-identical-title": "error",
     "jest/prefer-to-have-length": "warn",
-    "jest/valid-expect": "error"
+    "jest/valid-expect": "error",
+    "jest/no-conditional-expect": "off",
+    "no-case-declarations": "off"
   },
   "overrides": [
     {

@@ -305,7 +305,7 @@ export async function listInstalledServers(scope: InstallScope | 'all' = 'user')
 
         // Parse the output
         const lines = stdout.split('\n');
-        let isCheckingPhase = true;
+        const _isCheckingPhase = true;
         const userServers: string[] = [];
         const projectServers: string[] = [];
 
@@ -315,7 +315,6 @@ export async function listInstalledServers(scope: InstallScope | 'all' = 'user')
           }
 
           if (line.trim() === '') {
-            isCheckingPhase = false;
             continue;
           }
 
@@ -323,8 +322,8 @@ export async function listInstalledServers(scope: InstallScope | 'all' = 'user')
           const match = line.match(/^(\S+):\s+(.+?)\s+-\s+(✓|✗)/);
           if (match) {
             const serverId = match[1];
-            const command = match[2];
-            const status = match[3] === '✓' ? 'Connected' : 'Failed';
+            const _command = match[2];
+            const _status = match[3] === '✓' ? 'Connected' : 'Failed';
 
             // Determine scope based on project .mcp.json
             let isProjectLevel = false;

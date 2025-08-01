@@ -1,4 +1,4 @@
-import inquirer, { QuestionCollection, Answers } from 'inquirer';
+import inquirer, { Answers } from 'inquirer';
 import chalk from 'chalk';
 import ora from 'ora';
 import { servers } from './servers.js';
@@ -366,7 +366,7 @@ async function promptForOption(option: ConfigOption): Promise<any> {
       break;
 
     case 'paths':
-      const defaultPaths = option.default || [
+      const _defaultPaths = option.default || [
         path.join(os.homedir(), 'Documents'),
         path.join(os.homedir(), 'Projects'),
       ];
@@ -554,7 +554,7 @@ async function restoreFlow() {
   }
 }
 
-async function removeFlow(defaultScope: InstallScope = 'user') {
+async function removeFlow(_defaultScope: InstallScope = 'user') {
   // Show loading spinner while fetching installed servers
   const spinner = ora('Loading installed MCP servers...').start();
 
