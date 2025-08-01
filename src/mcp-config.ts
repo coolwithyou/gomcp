@@ -81,12 +81,16 @@ export async function addProjectServer(server: MCPServer, config?: ServerConfig)
 
   // Handle filesystem server special case
   if (server.id === 'filesystem' && config?.paths) {
-    serverConfig.args!.push(...(config.paths as string[]));
+    if (serverConfig.args) {
+      serverConfig.args.push(...(config.paths as string[]));
+    }
   }
 
   // Handle Serena web dashboard configuration
   if (server.id === 'serena' && config?.SERENA_DISABLE_WEB_DASHBOARD === true) {
-    serverConfig.args!.push('--enable-web-dashboard', 'False');
+    if (serverConfig.args) {
+      serverConfig.args.push('--enable-web-dashboard', 'False');
+    }
   }
 
   // Add environment variables
