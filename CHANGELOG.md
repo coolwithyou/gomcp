@@ -5,7 +5,7 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [0.1.0] - 2024-08-01
+## [0.12.4] - 2025-08-01
 
 ### Added
 - Initial release of gomcp - Interactive MCP Setup for Claude Code
@@ -59,4 +59,4 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 This is the first public release of gomcp. We're excited to help developers set up MCP servers for Claude Code quickly and easily!
 
-[0.1.0]: https://github.com/coolwithyou/gomcp/releases/tag/v0.1.0
+[0.12.4]: https://github.com/coolwithyou/gomcp/releases/tag/v0.12.4

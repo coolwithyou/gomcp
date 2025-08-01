@@ -1,5 +1,11 @@
 # gomcp - Interactive MCP Setup for Claude Code
 
+<div align="center">
+
+[English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh.md)
+
+</div>
+
 [![npm version](https://badge.fury.io/js/gomcp.svg)](https://badge.fury.io/js/gomcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Node.js Version](https://img.shields.io/node/v/gomcp.svg)](https://nodejs.org)
