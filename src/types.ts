@@ -27,13 +27,13 @@ export interface ConfigOption {
   label: string;
   description?: string;
   required: boolean;
-  default?: any;
+  default?: string | boolean | string[];
   choices?: { label: string; value: string }[];
-  validate?: (value: any) => boolean | string;
+  validate?: (value: unknown) => boolean | string;
 }
 
 export interface ServerConfig {
-  [key: string]: any;
+  [key: string]: string | boolean | string[] | number | Record<string, unknown>;
 }
 
 export interface InstallResult {
