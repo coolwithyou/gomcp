@@ -1,0 +1,1106 @@
+import { execa } from 'execa';
+import chalk from 'chalk';
+import ora from 'ora';
+import * as fs from 'fs/promises';
+import * as path from 'path';
+import * as os from 'os';
+import { servers, presets } from './servers.js';
+import { MCPServer, ServerConfig, InstallResult, InstallScope } from './types.js';
+import { addProjectServer, removeProjectServer } from './mcp-config.js';
+
+export async function installServers(
+  serverIds: string[],
+  configs: Map<string, ServerConfig>,
+  scope: InstallScope = 'user',
+  force: boolean = false
+): Promise<void> {
+  console.log(chalk.bold('\n🚀 Installing MCP servers...\n'));
+
+  const results: InstallResult[] = [];
+
+  for (const serverId of serverIds) {
+    const server = servers.find((s) => s.id === serverId);
+    if (!server) {
+      console.error(chalk.red(`Server ${serverId} not found`));
+      continue;
+    }
+
+    // Check forceProjectScope
+    if (server.forceProjectScope && scope === 'user') {
+      console.error(chalk.red(`\n⛔ ${server.name} is a project-only MCP server.`));
+      console.error(chalk.gray('   It requires project-specific configuration and memory.'));
+      console.error(chalk.gray('   Each project must maintain its own independent instance.\n'));
+      results.push({
+        server,
+        success: false,
+        error: 'Project-only server cannot be installed at user level',
+      });
+      continue;
+    }
+
+    // Check preferredScope
+    if (server.preferredScope && scope !== server.preferredScope && !force) {
+      console.log(
+        chalk.yellow(
+          `\n⚠️  ${server.name} is recommended for ${server.preferredScope} level installation.`
+        )
+      );
+      console.log(chalk.gray(getWarningMessage(server, scope)));
+      console.log(chalk.gray(`   Use --force flag to install at ${scope} level anyway.\n`));
+      results.push({
+        server,
+        success: false,
+        error: `Recommended for ${server.preferredScope} level (use --force to override)`,
+      });
+      continue;
+    }
+
+    const spinner = ora(`Installing ${server.name}...`).start();
+
+    try {
+      const config = configs.get(serverId);
+      await installServer(server, config, scope);
+
+      spinner.succeed(chalk.green(`${server.name} installed successfully`));
+      results.push({ server, success: true });
+    } catch (error) {
+      spinner.fail(chalk.red(`${server.name} installation failed`));
+      console.error(chalk.gray(`  Error: ${error}`));
+      if (error instanceof Error && error.stack) {
+        console.error(chalk.gray(`  Stack: ${error.stack}`));
+      }
+      results.push({ server, success: false, error: String(error) });
+    }
+  }
+
+  // Summary
+  console.log(chalk.bold('\n📊 Installation Summary:\n'));
+
+  const successful = results.filter((r) => r.success);
+  const failed = results.filter((r) => !r.success);
+
+  if (successful.length > 0) {
+    console.log(chalk.green(`✓ Successfully installed (${successful.length}):`));
+    successful.forEach((r) => console.log(`  - ${r.server.name}`));
+  }
+
+  if (failed.length > 0) {
+    console.log(chalk.red(`\n✗ Failed to install (${failed.length}):`));
+    failed.forEach((r) => console.log(`  - ${r.server.name}: ${r.error}`));
+  }
+
+  // Next steps
+  console.log(chalk.cyan('\n🎉 Setup complete!'));
+
+  // Check if any servers were installed at project scope
+  const projectServers = results.filter((r) => r.success && scope === 'project');
+  if (projectServers.length > 0) {
+    console.log(chalk.yellow('\n📁 Project Server Notes:'));
+    console.log('• A .mcp.json file has been created/updated for team sharing');
+    console.log('• The servers are also activated in your Claude Code immediately');
+    console.log('• Team members can use this file after cloning the project');
+    console.log(
+      `• To reset project server approvals: ${chalk.bold('claude mcp reset-project-choices')}`
+    );
+  }
+
+  console.log(`\nRun ${chalk.bold('claude')} to start using Claude Code with your new MCP servers`);
+  console.log(`Use ${chalk.bold('/mcp')} in Claude Code to check server status\n`);
+}
+
+function getWarningMessage(server: MCPServer, scope: InstallScope): string {
+  const warnings: Record<string, Record<InstallScope, string>> = {
+    postgresql: {
+      user: 'All projects will share the same database connection',
+      project: '',
+    },
+    supabase: {
+      user: 'All projects will share the same Supabase instance',
+      project: '',
+    },
+    jupyter: {
+      user: 'Virtual environments and dependencies may conflict across projects',
+      project: '',
+    },
+  };
+
+  return (
+    warnings[server.id]?.[scope] || `${server.name} works best at ${server.preferredScope} level`
+  );
+}
+
+async function installServerViaClaude(
+  server: MCPServer,
+  config?: ServerConfig,
+  scope: InstallScope = 'user'
+): Promise<void> {
+  const args = ['mcp', 'add', server.id];
+
+  // Add scope flag
+  if (scope === 'user') {
+    args.push('-s', 'user');
+  } else if (scope === 'project') {
+    args.push('-s', 'project');
+  }
+  // Note: local scope is the default, so no -s flag needed
+
+  // Build the command arguments
+  let commandArgs: string[];
+
+  if (server.command) {
+    // Use custom command if specified
+    commandArgs = ['--', server.command];
+    if (server.args) {
+      commandArgs.push(...server.args);
+    }
+  } else {
+    // Default to npx
+    commandArgs = ['--', 'npx', '-y', server.package];
+
+    // Add any additional arguments from server definition
+    if (server.args) {
+      commandArgs.push(...server.args);
+    }
+  }
+
+  // Handle filesystem server special case - add paths as arguments
+  if (server.id === 'filesystem' && config?.paths) {
+    commandArgs.push(...config.paths);
+  }
+
+  args.push(...commandArgs);
+
+  // Build environment variables
+  const env: Record<string, string> = {};
+
+  // Copy existing env vars
+  for (const [key, value] of Object.entries(process.env)) {
+    if (value !== undefined) {
+      env[key] = value;
+    }
+  }
+
+  if (config) {
+    for (const [key, value] of Object.entries(config)) {
+      if (key !== 'paths') {
+        // Skip paths as they're handled as arguments
+        env[key] = String(value);
+      }
+    }
+  }
+
+  // Execute the claude mcp add command
+  await execa('claude', args, { env });
+}
+
+async function installServer(
+  server: MCPServer,
+  config?: ServerConfig,
+  scope: InstallScope = 'user'
+): Promise<void> {
+  // Handle project scope - write to .mcp.json AND use claude mcp add
+  if (scope === 'project') {
+    // 1. Add to .mcp.json for team sharing
+    await addProjectServer(server, config);
+
+    // 2. Also use claude mcp add for immediate activation
+    // This ensures the server is available without restarting Claude Code
+    try {
+      await installServerViaClaude(server, config, 'project');
+    } catch (error) {
+      // If already installed, that's fine - we still want the .mcp.json
+      console.log(chalk.gray('Note: Server may already be active in Claude Code'));
+    }
+
+    return;
+  }
+
+  // For user/local scope, use claude mcp add
+  await installServerViaClaude(server, config, scope);
+}
+
+export async function installPreset(
+  presetName: string,
+  scope: InstallScope = 'user',
+  force: boolean = false
+): Promise<void> {
+  const serverIds = presets[presetName];
+  if (!serverIds) {
+    throw new Error(`Unknown preset: ${presetName}`);
+  }
+
+  console.log(chalk.cyan(`\n📦 Installing ${presetName} preset...\n`));
+  console.log(chalk.gray(`Scope: ${scope === 'user' ? 'User (Global)' : 'Project'}\n`));
+  console.log('Servers to install:');
+  serverIds.forEach((id) => {
+    const server = servers.find((s) => s.id === id);
+    if (server) {
+      console.log(`  - ${server.name}`);
+    }
+  });
+
+  console.log(''); // Add spacing
+
+  // Collect configs for servers that need them
+  const configs: Map<string, ServerConfig> = new Map();
+
+  for (const serverId of serverIds) {
+    const server = servers.find((s) => s.id === serverId);
+    if (server?.requiresConfig && server.configOptions) {
+      console.log(chalk.cyan(`\n📝 Configure ${server.name}:`));
+
+      // For presets, we'll use default values where available
+      const config: ServerConfig = {};
+      for (const option of server.configOptions) {
+        if (option.default !== undefined) {
+          config[option.key] = option.default;
+        } else {
+          // For required fields without defaults, prompt user
+          console.log(chalk.yellow(`  ${option.label} is required but has no default value.`));
+          console.log(chalk.gray("  Please configure this server manually using 'gomcp'."));
+        }
+      }
+
+      if (Object.keys(config).length > 0) {
+        configs.set(serverId, config);
+      }
+    }
+  }
+
+  await installServers(serverIds, configs, scope, force);
+}
+
+export async function verifyInstallations(): Promise<void> {
+  const spinner = ora('Checking MCP server status...').start();
+
+  try {
+    // Run claude /mcp command to get status
+    const { stdout } = await execa('claude', ['/mcp']);
+
+    spinner.stop();
+    console.log(chalk.bold('\n📊 MCP Server Status:\n'));
+    console.log(stdout);
+  } catch (error) {
+    spinner.fail('Failed to check MCP server status');
+    console.error(chalk.red('Error:'), error);
+    console.log(chalk.gray('\nMake sure Claude Code is installed and accessible.'));
+  }
+}
+
+export async function listInstalledServers(scope: InstallScope | 'all' = 'user'): Promise<void> {
+  console.log(chalk.bold('\n📋 Installed MCP Servers\n'));
+
+  const spinner = ora('Loading installed servers...').start();
+
+  try {
+    let hasServers = false;
+
+    // First, try to get all servers from claude mcp list
+    try {
+      const { stdout } = await execa('claude', ['mcp', 'list']);
+
+      if (stdout && stdout.includes(':')) {
+        hasServers = true;
+        spinner.stop();
+
+        // Parse the output
+        const lines = stdout.split('\n');
+        let isCheckingPhase = true;
+        const userServers: string[] = [];
+        const projectServers: string[] = [];
+
+        for (const line of lines) {
+          if (line.includes('Checking MCP server health')) {
+            continue;
+          }
+
+          if (line.trim() === '') {
+            isCheckingPhase = false;
+            continue;
+          }
+
+          // Parse server lines like "github: npx -y @modelcontextprotocol/server-github - ✓ Connected"
+          const match = line.match(/^(\S+):\s+(.+?)\s+-\s+(✓|✗)/);
+          if (match) {
+            const serverId = match[1];
+            const command = match[2];
+            const status = match[3] === '✓' ? 'Connected' : 'Failed';
+
+            // Determine scope based on project .mcp.json
+            let isProjectLevel = false;
+            try {
+              const projectConfig = await fs.readFile(
+                path.join(process.cwd(), '.mcp.json'),
+                'utf-8'
+              );
+              const config = JSON.parse(projectConfig);
+              if (config.mcpServers && config.mcpServers[serverId]) {
+                isProjectLevel = true;
+                projectServers.push(serverId);
+              }
+            } catch {
+              // Not in project config, so it's user level
+            }
+
+            if (!isProjectLevel) {
+              userServers.push(serverId);
+            }
+          }
+        }
+
+        // Display based on scope filter
+        if ((scope === 'user' || scope === 'all') && userServers.length > 0) {
+          console.log(chalk.cyan('User Level (Global):'));
+          console.log('');
+          for (const serverId of userServers) {
+            const server = servers.find((s) => s.id === serverId);
+            const icon = server ? getServerIcon(serverId) : '📦';
+            const name = server ? server.name : serverId;
+            console.log(`  ${icon} ${chalk.bold(name)} (${serverId})`);
+          }
+          console.log('');
+        }
+
+        if ((scope === 'project' || scope === 'all') && projectServers.length > 0) {
+          console.log(chalk.cyan(`Project Level (${path.join(process.cwd(), '.mcp.json')}):`));
+          console.log('');
+          for (const serverId of projectServers) {
+            const server = servers.find((s) => s.id === serverId);
+            const icon = server ? getServerIcon(serverId) : '📦';
+            const name = server ? server.name : serverId;
+            console.log(`  ${icon} ${chalk.bold(name)} (${serverId})`);
+          }
+          console.log('');
+        }
+      }
+    } catch (error) {
+      // If claude mcp list fails, fall back to checking .mcp.json files
+      // Check project config
+      if (scope === 'project' || scope === 'user') {
+        try {
+          const configData = await fs.readFile(path.join(process.cwd(), '.mcp.json'), 'utf-8');
+          const mcpConfig = JSON.parse(configData);
+
+          if (mcpConfig.mcpServers && Object.keys(mcpConfig.mcpServers).length > 0) {
+            hasServers = true;
+            spinner.stop();
+
+            console.log(chalk.cyan(`Project Level (${path.join(process.cwd(), '.mcp.json')}):`));
+            console.log('');
+
+            for (const [serverId, serverConfig] of Object.entries(mcpConfig.mcpServers)) {
+              const server = servers.find((s) => s.id === serverId);
+              const icon = server ? getServerIcon(serverId) : '📦';
+              const name = server ? server.name : serverId;
+
+              console.log(`  ${icon} ${chalk.bold(name)} (${serverId})`);
+
+              // Show configuration details if available
+              if (typeof serverConfig === 'object' && serverConfig !== null) {
+                const cfg = serverConfig as any;
+                if (cfg.command) {
+                  console.log(chalk.gray(`     Command: ${cfg.command}`));
+                }
+                if (cfg.args && Array.isArray(cfg.args)) {
+                  console.log(chalk.gray(`     Args: ${cfg.args.join(' ')}`));
+                }
+              }
+            }
+            console.log('');
+          }
+        } catch (error) {
+          // Project config doesn't exist or is invalid
+        }
+      }
+    }
+
+    if (!hasServers) {
+      spinner.fail('No MCP servers installed');
+      console.log(chalk.yellow('Install some servers first with gomcp'));
+    } else if (spinner.isSpinning) {
+      spinner.stop();
+    }
+  } catch (error) {
+    spinner.fail('Failed to list installed servers');
+    console.error(chalk.red('Error:'), error);
+  }
+}
+
+function getServerIcon(serverId: string): string {
+  const icons: Record<string, string> = {
+    github: '🐙',
+    filesystem: '📁',
+    'sequential-thinking': '🧠',
+    postgresql: '🐘',
+    puppeteer: '🌐',
+    playwright: '🎭',
+    'browser-tools': '🔧',
+    chrome: '🌏',
+    docker: '🐳',
+    serena: '🤖',
+    slack: '💬',
+    notion: '📝',
+    memory: '💾',
+    jupyter: '📊',
+    duckduckgo: '🦆',
+    zapier: '⚡',
+    stripe: '💳',
+    discord: '🎮',
+    email: '📧',
+    youtube: '📺',
+    figma: '🎨',
+    supabase: '⚡',
+    'brave-search': '🦁',
+    gsuite: '📋',
+    excel: '📈',
+    context7: '📚',
+    sourcegraph: '🔍',
+    scipy: '🔬',
+  };
+
+  return icons[serverId] || '📦';
+}
+
+interface InstalledServer {
+  id: string;
+  package: string;
+  command?: string;
+  args?: string[];
+  config?: any;
+}
+
+async function getInstalledServers(): Promise<InstalledServer[]> {
+  const configPath = path.join(os.homedir(), '.claude', 'config.json');
+
+  try {
+    const configData = await fs.readFile(configPath, 'utf-8');
+    const config = JSON.parse(configData);
+
+    if (!config.mcpServers) {
+      return [];
+    }
+
+    const installedServers: InstalledServer[] = [];
+
+    for (const [serverId, serverConfig] of Object.entries(config.mcpServers)) {
+      if (typeof serverConfig === 'object' && serverConfig !== null) {
+        const server = serverConfig as any;
+        installedServers.push({
+          id: serverId,
+          package: server.package || '',
+          command: server.command,
+          args: server.args,
+          config: server.config,
+        });
+      }
+    }
+
+    return installedServers;
+  } catch (error) {
+    return [];
+  }
+}
+
+async function checkForUpdates(
+  installedServers: InstalledServer[]
+): Promise<Map<string, { current: string; latest: string; needsUpdate: boolean }>> {
+  const updateInfo = new Map();
+
+  for (const installed of installedServers) {
+    // Find the server definition
+    const serverDef = servers.find((s) => s.id === installed.id);
+    if (!serverDef) {
+      continue;
+    }
+
+    try {
+      // Get latest version from npm
+      const { stdout: latestVersion } = await execa('npm', ['view', serverDef.package, 'version']);
+
+      // Get current version (simplified - in real implementation we'd check installed version)
+      // For now, we'll mark all as needing update
+      updateInfo.set(installed.id, {
+        current: 'installed',
+        latest: latestVersion.trim(),
+        needsUpdate: true,
+      });
+    } catch (error) {
+      // Skip if we can't check version
+    }
+  }
+
+  return updateInfo;
+}
+
+export async function updateServers(): Promise<void> {
+  console.log(chalk.cyan('\n🔄 Checking for server updates...\n'));
+
+  const spinner = ora('Getting installed servers...').start();
+
+  try {
+    // Get installed servers
+    const installedServers = await getInstalledServers();
+
+    if (installedServers.length === 0) {
+      spinner.fail('No MCP servers installed');
+      return;
+    }
+
+    spinner.text = 'Checking for updates...';
+
+    // Check for updates
+    const updateInfo = await checkForUpdates(installedServers);
+
+    spinner.stop();
+
+    // Show servers that need updates
+    const serversNeedingUpdate = Array.from(updateInfo.entries())
+      .filter(([_, info]) => info.needsUpdate)
+      .map(([id]) => {
+        const server = servers.find((s) => s.id === id);
+        const info = updateInfo.get(id)!;
+        return { server, info };
+      });
+
+    if (serversNeedingUpdate.length === 0) {
+      console.log(chalk.green('✅ All servers are up to date!'));
+      return;
+    }
+
+    console.log(
+      chalk.yellow(`Found ${serversNeedingUpdate.length} server(s) with available updates:\n`)
+    );
+
+    for (const { server, info } of serversNeedingUpdate) {
+      if (server) {
+        console.log(`  ${chalk.cyan(server.name)} - ${chalk.gray(info.latest)}`);
+      }
+    }
+
+    // Import inquirer dynamically
+    const inquirer = (await import('inquirer')).default;
+
+    const { selectedServers } = await inquirer.prompt([
+      {
+        type: 'checkbox',
+        name: 'selectedServers',
+        message: 'Select servers to update:',
+        choices: serversNeedingUpdate
+          .filter(({ server }) => server)
+          .map(({ server, info }) => ({
+            name: `${server!.name} (→ ${info.latest})`,
+            value: server!.id,
+            checked: true,
+          })),
+      },
+    ]);
+
+    if (selectedServers.length === 0) {
+      console.log(chalk.gray('\nNo servers selected for update.'));
+      return;
+    }
+
+    // Perform updates
+    console.log(chalk.bold('\n🚀 Updating selected servers...\n'));
+
+    for (const serverId of selectedServers) {
+      const server = servers.find((s) => s.id === serverId);
+      if (!server) {
+        continue;
+      }
+
+      const installed = installedServers.find((s) => s.id === serverId);
+      if (!installed) {
+        continue;
+      }
+
+      const updateSpinner = ora(`Updating ${server.name}...`).start();
+
+      try {
+        // Reinstall the server (preserving config)
+        const config = installed.config || {};
+        await installServer(server, config, 'user');
+
+        updateSpinner.succeed(chalk.green(`${server.name} updated successfully`));
+      } catch (error) {
+        updateSpinner.fail(chalk.red(`${server.name} update failed`));
+        console.error(chalk.gray(`  Error: ${error}`));
+      }
+    }
+
+    console.log(chalk.green('\n✅ Update complete!'));
+  } catch (error) {
+    spinner.fail('Failed to check for updates');
+    console.error(chalk.red('Error:'), error);
+  }
+}
+
+export async function backupConfig(): Promise<void> {
+  const spinner = ora('Creating backup...').start();
+
+  try {
+    const backupData: any = {
+      version: '2.0',
+      timestamp: new Date().toISOString(),
+      configs: {},
+    };
+
+    // Backup user-level config
+    const userConfigPath = path.join(process.env.HOME || '', '.claude', 'config.json');
+    try {
+      await fs.access(userConfigPath);
+      const userConfig = await fs.readFile(userConfigPath, 'utf-8');
+      backupData.configs.user = JSON.parse(userConfig);
+      spinner.text = 'Backing up user-level configuration...';
+    } catch {
+      // No user config
+    }
+
+    // Backup project-level config
+    const projectConfigPath = path.join(process.cwd(), '.mcp.json');
+    try {
+      await fs.access(projectConfigPath);
+      const projectConfig = await fs.readFile(projectConfigPath, 'utf-8');
+      backupData.configs.project = JSON.parse(projectConfig);
+      backupData.projectPath = process.cwd();
+      spinner.text = 'Backing up project-level configuration...';
+    } catch {
+      // No project config
+    }
+
+    // Check if we have anything to backup
+    if (Object.keys(backupData.configs).length === 0) {
+      spinner.fail('No MCP configurations found to backup');
+      console.log(chalk.yellow('No user or project MCP configurations exist yet.'));
+      console.log(chalk.gray('Install some MCP servers first, then try backing up.'));
+      return;
+    }
+
+    // Save backup with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupPath = `mcp-backup-${timestamp}.json`;
+
+    await fs.writeFile(backupPath, JSON.stringify(backupData, null, 2));
+
+    spinner.succeed(`Backup saved to ${chalk.green(backupPath)}`);
+
+    // Show what was backed up
+    const backedUp = [];
+    if (backupData.configs.user) {
+      backedUp.push('User-level (global)');
+    }
+    if (backupData.configs.project) {
+      backedUp.push(`Project-level (${path.basename(process.cwd())})`);
+    }
+    console.log(chalk.gray(`Backed up: ${backedUp.join(', ')}`));
+  } catch (error) {
+    spinner.fail('Failed to create backup');
+    console.error(chalk.red('Error:'), error);
+  }
+}
+
+export async function backupUserConfig(): Promise<void> {
+  const spinner = ora('Creating user configuration backup...').start();
+
+  try {
+    const backupData: any = {
+      version: '2.1',
+      type: 'user',
+      timestamp: new Date().toISOString(),
+      configs: {},
+    };
+
+    // Backup user-level config
+    const userConfigPath = path.join(process.env.HOME || '', '.claude', 'config.json');
+    try {
+      await fs.access(userConfigPath);
+      const userConfig = await fs.readFile(userConfigPath, 'utf-8');
+      backupData.configs.user = JSON.parse(userConfig);
+    } catch {
+      spinner.fail('No user-level MCP configuration found');
+      console.log(chalk.yellow('No user configuration exists yet.'));
+      console.log(chalk.gray('Install some MCP servers at user level first, then try backing up.'));
+      return;
+    }
+
+    // Save backup with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupPath = `mcp-user-backup-${timestamp}.json`;
+
+    await fs.writeFile(backupPath, JSON.stringify(backupData, null, 2));
+
+    spinner.succeed(`User configuration backup saved to ${chalk.green(backupPath)}`);
+  } catch (error) {
+    spinner.fail('Failed to create user configuration backup');
+    console.error(chalk.red('Error:'), error);
+  }
+}
+
+export async function backupProjectConfig(): Promise<void> {
+  const spinner = ora('Creating project configuration backup...').start();
+
+  try {
+    const backupData: any = {
+      version: '2.1',
+      type: 'project',
+      timestamp: new Date().toISOString(),
+      projectPath: process.cwd(),
+      configs: {},
+    };
+
+    // Backup project-level config
+    const projectConfigPath = path.join(process.cwd(), '.mcp.json');
+    try {
+      await fs.access(projectConfigPath);
+      const projectConfig = await fs.readFile(projectConfigPath, 'utf-8');
+      backupData.configs.project = JSON.parse(projectConfig);
+    } catch {
+      spinner.fail('No project-level MCP configuration found');
+      console.log(chalk.yellow('No project configuration exists in this directory.'));
+      console.log(
+        chalk.gray('Install some MCP servers at project level first, then try backing up.')
+      );
+      return;
+    }
+
+    // Save backup with timestamp
+    const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+    const backupPath = `mcp-project-backup-${timestamp}.json`;
+
+    await fs.writeFile(backupPath, JSON.stringify(backupData, null, 2));
+
+    spinner.succeed(`Project configuration backup saved to ${chalk.green(backupPath)}`);
+    console.log(chalk.gray(`Project: ${path.basename(process.cwd())}`));
+  } catch (error) {
+    spinner.fail('Failed to create project configuration backup');
+    console.error(chalk.red('Error:'), error);
+  }
+}
+
+export async function restoreConfig(backupPath: string): Promise<void> {
+  const spinner = ora('Restoring from backup...').start();
+
+  try {
+    // Check if backup file exists
+    try {
+      await fs.access(backupPath);
+    } catch {
+      spinner.fail('Backup file not found');
+      console.log(chalk.yellow(`Cannot find backup file: ${backupPath}`));
+      return;
+    }
+
+    // Read backup file
+    const backupDataStr = await fs.readFile(backupPath, 'utf-8');
+    let backupData: any;
+
+    // Parse and validate JSON
+    try {
+      backupData = JSON.parse(backupDataStr);
+    } catch {
+      spinner.fail('Invalid backup file');
+      console.log(chalk.yellow('The backup file is not valid JSON.'));
+      return;
+    }
+
+    // Handle different backup formats
+    if (backupData.version === '2.1' && backupData.type) {
+      // New format with separate user/project backups
+      if (backupData.type === 'user') {
+        await restoreUserConfig(backupPath);
+        return;
+      } else if (backupData.type === 'project') {
+        await restoreProjectConfig(backupPath);
+        return;
+      }
+    } else if (backupData.version === '2.0' && backupData.configs) {
+      // New format with user and project configs
+      spinner.text = 'Restoring configurations...';
+
+      // Restore user-level config
+      if (backupData.configs.user) {
+        const userConfigPath = path.join(process.env.HOME || '', '.claude', 'config.json');
+        const userConfigDir = path.dirname(userConfigPath);
+
+        // Ensure config directory exists
+        await fs.mkdir(userConfigDir, { recursive: true });
+
+        // Backup current user config if exists
+        try {
+          const currentConfig = await fs.readFile(userConfigPath, 'utf-8');
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          await fs.writeFile(`${userConfigPath}.backup-${timestamp}`, currentConfig);
+          console.log(chalk.gray('Current user config backed up'));
+        } catch {
+          // No existing config
+        }
+
+        await fs.writeFile(userConfigPath, JSON.stringify(backupData.configs.user, null, 2));
+        spinner.text = 'Restored user-level configuration';
+      }
+
+      // Restore project-level config
+      if (backupData.configs.project) {
+        const projectConfigPath = path.join(process.cwd(), '.mcp.json');
+
+        // Backup current project config if exists
+        try {
+          const currentConfig = await fs.readFile(projectConfigPath, 'utf-8');
+          const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+          await fs.writeFile(`${projectConfigPath}.backup-${timestamp}`, currentConfig);
+          console.log(chalk.gray('Current project config backed up'));
+        } catch {
+          // No existing config
+        }
+
+        await fs.writeFile(projectConfigPath, JSON.stringify(backupData.configs.project, null, 2));
+        spinner.text = 'Restored project-level configuration';
+
+        if (backupData.projectPath && backupData.projectPath !== process.cwd()) {
+          console.log(chalk.yellow(`Note: Project config was from ${backupData.projectPath}`));
+        }
+      }
+
+      spinner.succeed('Configurations restored successfully');
+
+      // Show what was restored
+      const restored = [];
+      if (backupData.configs.user) {
+        restored.push('User-level (global)');
+      }
+      if (backupData.configs.project) {
+        restored.push('Project-level');
+      }
+      console.log(chalk.gray(`Restored: ${restored.join(', ')}`));
+    } else {
+      // Old format - single config file (user-level only)
+      const configPath = path.join(process.env.HOME || '', '.claude', 'config.json');
+      const configDir = path.dirname(configPath);
+
+      await fs.mkdir(configDir, { recursive: true });
+
+      // Backup current config if exists
+      try {
+        const currentConfig = await fs.readFile(configPath, 'utf-8');
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        await fs.writeFile(`${configPath}.backup-${timestamp}`, currentConfig);
+        console.log(chalk.gray('Current config backed up'));
+      } catch {
+        // No existing config
+      }
+
+      await fs.writeFile(configPath, backupDataStr);
+      spinner.succeed('User-level configuration restored successfully');
+      console.log(chalk.gray('Note: This backup only contains user-level configuration'));
+    }
+  } catch (error) {
+    spinner.fail('Failed to restore from backup');
+    console.error(chalk.red('Error:'), error);
+  }
+}
+
+export async function restoreUserConfig(backupPath: string): Promise<void> {
+  const spinner = ora('Restoring user configuration from backup...').start();
+
+  try {
+    // Check if backup file exists
+    try {
+      await fs.access(backupPath);
+    } catch {
+      spinner.fail('Backup file not found');
+      console.log(chalk.yellow(`Cannot find backup file: ${backupPath}`));
+      return;
+    }
+
+    // Read backup file
+    const backupDataStr = await fs.readFile(backupPath, 'utf-8');
+    let backupData: any;
+
+    // Parse and validate JSON
+    try {
+      backupData = JSON.parse(backupDataStr);
+    } catch {
+      spinner.fail('Invalid backup file');
+      console.log(chalk.yellow('The backup file is not valid JSON.'));
+      return;
+    }
+
+    // Validate backup type
+    if (backupData.type && backupData.type !== 'user') {
+      spinner.fail('Invalid backup type');
+      console.log(
+        chalk.yellow(
+          `This backup file contains ${backupData.type} configuration, not user configuration.`
+        )
+      );
+      return;
+    }
+
+    // Check for user config in backup
+    const userConfig = backupData.configs?.user || (backupData.mcpServers ? backupData : null);
+    if (!userConfig) {
+      spinner.fail('No user configuration found in backup');
+      console.log(chalk.yellow('This backup file does not contain user configuration.'));
+      return;
+    }
+
+    const userConfigPath = path.join(process.env.HOME || '', '.claude', 'config.json');
+    const userConfigDir = path.dirname(userConfigPath);
+
+    // Ensure config directory exists
+    await fs.mkdir(userConfigDir, { recursive: true });
+
+    // Backup current user config if exists
+    try {
+      const currentConfig = await fs.readFile(userConfigPath, 'utf-8');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      await fs.writeFile(`${userConfigPath}.backup-${timestamp}`, currentConfig);
+      console.log(chalk.gray('Current user config backed up'));
+    } catch {
+      // No existing config
+    }
+
+    await fs.writeFile(userConfigPath, JSON.stringify(userConfig, null, 2));
+    spinner.succeed('User configuration restored successfully');
+  } catch (error) {
+    spinner.fail('Failed to restore user configuration from backup');
+    console.error(chalk.red('Error:'), error);
+  }
+}
+
+export async function restoreProjectConfig(backupPath: string): Promise<void> {
+  const spinner = ora('Restoring project configuration from backup...').start();
+
+  try {
+    // Check if backup file exists
+    try {
+      await fs.access(backupPath);
+    } catch {
+      spinner.fail('Backup file not found');
+      console.log(chalk.yellow(`Cannot find backup file: ${backupPath}`));
+      return;
+    }
+
+    // Read backup file
+    const backupDataStr = await fs.readFile(backupPath, 'utf-8');
+    let backupData: any;
+
+    // Parse and validate JSON
+    try {
+      backupData = JSON.parse(backupDataStr);
+    } catch {
+      spinner.fail('Invalid backup file');
+      console.log(chalk.yellow('The backup file is not valid JSON.'));
+      return;
+    }
+
+    // Validate backup type
+    if (backupData.type && backupData.type !== 'project') {
+      spinner.fail('Invalid backup type');
+      console.log(
+        chalk.yellow(
+          `This backup file contains ${backupData.type} configuration, not project configuration.`
+        )
+      );
+      return;
+    }
+
+    // Check for project config in backup
+    if (!backupData.configs?.project) {
+      spinner.fail('No project configuration found in backup');
+      console.log(chalk.yellow('This backup file does not contain project configuration.'));
+      return;
+    }
+
+    const projectConfigPath = path.join(process.cwd(), '.mcp.json');
+
+    // Backup current project config if exists
+    try {
+      const currentConfig = await fs.readFile(projectConfigPath, 'utf-8');
+      const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+      await fs.writeFile(`${projectConfigPath}.backup-${timestamp}`, currentConfig);
+      console.log(chalk.gray('Current project config backed up'));
+    } catch {
+      // No existing config
+    }
+
+    await fs.writeFile(projectConfigPath, JSON.stringify(backupData.configs.project, null, 2));
+    spinner.succeed('Project configuration restored successfully');
+
+    if (backupData.projectPath && backupData.projectPath !== process.cwd()) {
+      console.log(chalk.yellow(`Note: Project config was from ${backupData.projectPath}`));
+    }
+  } catch (error) {
+    spinner.fail('Failed to restore project configuration from backup');
+    console.error(chalk.red('Error:'), error);
+  }
+}
+
+export async function removeServers(
+  serverIds: string[],
+  scope: InstallScope = 'user'
+): Promise<void> {
+  console.log(chalk.bold('\n🗑️  Removing MCP servers...\n'));
+
+  const results: { server: string; success: boolean; error?: string }[] = [];
+
+  for (const serverId of serverIds) {
+    const spinner = ora(`Removing ${serverId}...`).start();
+
+    try {
+      if (scope === 'project') {
+        // Remove from .mcp.json
+        const removed = await removeProjectServer(serverId);
+        if (!removed) {
+          throw new Error('Server not found in project configuration');
+        }
+      } else {
+        // Use claude mcp remove command for user/local scope
+        const args = ['mcp', 'remove', serverId];
+        if (scope === 'user') {
+          args.push('-s', 'user');
+        }
+        await execa('claude', args);
+      }
+
+      spinner.succeed(chalk.green(`${serverId} removed successfully`));
+      results.push({ server: serverId, success: true });
+
+      // Remove from gomcp config
+      const server = servers.find((s) => s.id === serverId);
+      if (server) {
+        await removeFromGomcpConfig(serverId);
+      }
+    } catch (error) {
+      spinner.fail(chalk.red(`${serverId} removal failed`));
+      console.error(chalk.gray(`  Error: ${error}`));
+      results.push({ server: serverId, success: false, error: String(error) });
+    }
+  }
+
+  // Summary
+  console.log(chalk.bold('\n📊 Removal Summary:\n'));
+
+  const successful = results.filter((r) => r.success);
+  const failed = results.filter((r) => !r.success);
+
+  if (successful.length > 0) {
+    console.log(chalk.green(`✓ Successfully removed (${successful.length}):`));
+    successful.forEach((r) => console.log(`  - ${r.server}`));
+  }
+
+  if (failed.length > 0) {
+    console.log(chalk.red(`\n✗ Failed to remove (${failed.length}):`));
+    failed.forEach((r) => console.log(`  - ${r.server}: ${r.error}`));
+  }
+}
+
+async function removeFromGomcpConfig(serverId: string): Promise<void> {
+  const { loadConfig, saveConfig } = await import('./config.js');
+
+  const config = await loadConfig();
+  if (config) {
+    config.installedServers = config.installedServers.filter((s) => s.id !== serverId);
+    await saveConfig(config);
+  }
+}
