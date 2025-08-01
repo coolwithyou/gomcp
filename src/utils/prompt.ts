@@ -72,7 +72,7 @@ export async function checkboxPromptWithEscape<T extends Answers = Answers>(
   }
 
   // Create modified question with a safe validate function
-  const modifiedQuestion: CheckboxQuestion = {
+  const modifiedQuestion: CheckboxQuestion<T> = {
     type: question.type,
     name: question.name,
     message: question.message,
@@ -80,10 +80,13 @@ export async function checkboxPromptWithEscape<T extends Answers = Answers>(
     pageSize: question.pageSize || 20,
     // Always return true to allow any selection (including empty)
     validate: () => true,
-  };
+  } as CheckboxQuestion<T>;
 
   // Copy other properties that might exist but exclude the original validate
-  for (const key in question) {
+  const questionObj = question as Record<string, any>;
+  const modifiedObj = modifiedQuestion as Record<string, any>;
+  
+  for (const key in questionObj) {
     if (
       key !== 'validate' &&
       key !== 'type' &&
@@ -92,7 +95,7 @@ export async function checkboxPromptWithEscape<T extends Answers = Answers>(
       key !== 'choices' &&
       key !== 'pageSize'
     ) {
-      modifiedQuestion[key] = question[key];
+      modifiedObj[key] = questionObj[key];
     }
   }
 
