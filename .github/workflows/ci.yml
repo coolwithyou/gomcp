@@ -60,7 +60,6 @@ jobs:
     
     - name: Run linter
       run: npm run lint
-      continue-on-error: true # Since we haven't set up ESLint yet
 
   type-check:
     runs-on: ubuntu-latest
