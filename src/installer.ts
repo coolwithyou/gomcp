@@ -396,9 +396,9 @@ export async function listInstalledServers(scope: InstallScope | 'all' = 'user')
 
               // Show configuration details if available
               if (typeof serverConfig === 'object' && serverConfig !== null) {
-                const cfg = serverConfig as any;
+                const cfg = serverConfig as Record<string, unknown>;
                 if (cfg.command) {
-                  console.log(chalk.gray(`     Command: ${cfg.command}`));
+                  console.log(chalk.gray(`     Command: ${String(cfg.command)}`));
                 }
                 if (cfg.args && Array.isArray(cfg.args)) {
                   console.log(chalk.gray(`     Args: ${cfg.args.join(' ')}`));
@@ -465,7 +465,7 @@ interface InstalledServer {
   package: string;
   command?: string;
   args?: string[];
-  config?: any;
+  config?: Record<string, unknown>;
 }
 
 async function getInstalledServers(): Promise<InstalledServer[]> {
@@ -483,13 +483,13 @@ async function getInstalledServers(): Promise<InstalledServer[]> {
 
     for (const [serverId, serverConfig] of Object.entries(config.mcpServers)) {
       if (typeof serverConfig === 'object' && serverConfig !== null) {
-        const server = serverConfig as any;
+        const server = serverConfig as Record<string, unknown>;
         installedServers.push({
           id: serverId,
-          package: server.package || '',
-          command: server.command,
-          args: server.args,
-          config: server.config,
+          package: typeof server.package === 'string' ? server.package : '',
+          command: typeof server.command === 'string' ? server.command : undefined,
+          args: Array.isArray(server.args) ? server.args as string[] : undefined,
+          config: typeof server.config === 'object' && server.config !== null ? server.config as Record<string, unknown> : undefined,
         });
       }
     }
@@ -557,7 +557,7 @@ export async function updateServers(): Promise<void> {
       .filter(([_, info]) => info.needsUpdate)
       .map(([id]) => {
         const server = servers.find((s) => s.id === id);
-        const info = updateInfo.get(id)!;
+        const info = updateInfo.get(id);
         return { server, info };
       });
 
@@ -572,7 +572,7 @@ export async function updateServers(): Promise<void> {
 
     for (const { server, info } of serversNeedingUpdate) {
       if (server) {
-        console.log(`  ${chalk.cyan(server.name)} - ${chalk.gray(info.latest)}`);
+        console.log(`  ${chalk.cyan(server.name)} - ${chalk.gray(info?.latest || 'unknown')}`);
       }
     }
 
@@ -587,8 +587,8 @@ export async function updateServers(): Promise<void> {
         choices: serversNeedingUpdate
           .filter(({ server }) => server)
           .map(({ server, info }) => ({
-            name: `${server!.name} (→ ${info.latest})`,
-            value: server!.id,
+            name: `${server?.name} (→ ${info?.latest})`,
+            value: server?.id || '',
             checked: true,
           })),
       },
@@ -617,7 +617,7 @@ export async function updateServers(): Promise<void> {
 
       try {
         // Reinstall the server (preserving config)
-        const config = installed.config || {};
+        const config = (installed.config || {}) as ServerConfig;
         await installServer(server, config, 'user');
 
         updateSpinner.succeed(chalk.green(`${server.name} updated successfully`));
@@ -641,7 +641,7 @@ export async function backupConfig(): Promise<void> {
     const backupData: any = {
       version: '2.0',
       timestamp: new Date().toISOString(),
-      configs: {},
+      configs: {} as Record<string, unknown>,
     };
 
     // Backup user-level config
@@ -649,7 +649,7 @@ export async function backupConfig(): Promise<void> {
     try {
       await fs.access(userConfigPath);
       const userConfig = await fs.readFile(userConfigPath, 'utf-8');
-      backupData.configs.user = JSON.parse(userConfig);
+      (backupData.configs as Record<string, unknown>).user = JSON.parse(userConfig);
       spinner.text = 'Backing up user-level configuration...';
     } catch {
       // No user config
@@ -660,7 +660,7 @@ export async function backupConfig(): Promise<void> {
     try {
       await fs.access(projectConfigPath);
       const projectConfig = await fs.readFile(projectConfigPath, 'utf-8');
-      backupData.configs.project = JSON.parse(projectConfig);
+      (backupData.configs as Record<string, unknown>).project = JSON.parse(projectConfig);
       backupData.projectPath = process.cwd();
       spinner.text = 'Backing up project-level configuration...';
     } catch {
@@ -668,7 +668,7 @@ export async function backupConfig(): Promise<void> {
     }
 
     // Check if we have anything to backup
-    if (Object.keys(backupData.configs).length === 0) {
+    if (Object.keys(backupData.configs as Record<string, unknown>).length === 0) {
       spinner.fail('No MCP configurations found to backup');
       console.log(chalk.yellow('No user or project MCP configurations exist yet.'));
       console.log(chalk.gray('Install some MCP servers first, then try backing up.'));
@@ -706,7 +706,7 @@ export async function backupUserConfig(): Promise<void> {
       version: '2.1',
       type: 'user',
       timestamp: new Date().toISOString(),
-      configs: {},
+      configs: {} as Record<string, unknown>,
     };
 
     // Backup user-level config
@@ -714,7 +714,7 @@ export async function backupUserConfig(): Promise<void> {
     try {
       await fs.access(userConfigPath);
       const userConfig = await fs.readFile(userConfigPath, 'utf-8');
-      backupData.configs.user = JSON.parse(userConfig);
+      (backupData.configs as Record<string, unknown>).user = JSON.parse(userConfig);
     } catch {
       spinner.fail('No user-level MCP configuration found');
       console.log(chalk.yellow('No user configuration exists yet.'));
@@ -744,7 +744,7 @@ export async function backupProjectConfig(): Promise<void> {
       type: 'project',
       timestamp: new Date().toISOString(),
       projectPath: process.cwd(),
-      configs: {},
+      configs: {} as Record<string, unknown>,
     };
 
     // Backup project-level config
@@ -752,7 +752,7 @@ export async function backupProjectConfig(): Promise<void> {
     try {
       await fs.access(projectConfigPath);
       const projectConfig = await fs.readFile(projectConfigPath, 'utf-8');
-      backupData.configs.project = JSON.parse(projectConfig);
+      (backupData.configs as Record<string, unknown>).project = JSON.parse(projectConfig);
     } catch {
       spinner.fail('No project-level MCP configuration found');
       console.log(chalk.yellow('No project configuration exists in this directory.'));
@@ -791,7 +791,7 @@ export async function restoreConfig(backupPath: string): Promise<void> {
 
     // Read backup file
     const backupDataStr = await fs.readFile(backupPath, 'utf-8');
-    let backupData: any;
+    let backupData: Record<string, unknown>;
 
     // Parse and validate JSON
     try {
@@ -817,7 +817,8 @@ export async function restoreConfig(backupPath: string): Promise<void> {
       spinner.text = 'Restoring configurations...';
 
       // Restore user-level config
-      if (backupData.configs.user) {
+      const configs = backupData.configs as Record<string, unknown>;
+      if (configs && configs.user) {
         const userConfigPath = path.join(process.env.HOME || '', '.claude', 'config.json');
         const userConfigDir = path.dirname(userConfigPath);
 
@@ -834,12 +835,12 @@ export async function restoreConfig(backupPath: string): Promise<void> {
           // No existing config
         }
 
-        await fs.writeFile(userConfigPath, JSON.stringify(backupData.configs.user, null, 2));
+        await fs.writeFile(userConfigPath, JSON.stringify(configs.user, null, 2));
         spinner.text = 'Restored user-level configuration';
       }
 
       // Restore project-level config
-      if (backupData.configs.project) {
+      if (configs && configs.project) {
         const projectConfigPath = path.join(process.cwd(), '.mcp.json');
 
         // Backup current project config if exists
@@ -852,11 +853,11 @@ export async function restoreConfig(backupPath: string): Promise<void> {
           // No existing config
         }
 
-        await fs.writeFile(projectConfigPath, JSON.stringify(backupData.configs.project, null, 2));
+        await fs.writeFile(projectConfigPath, JSON.stringify(configs.project, null, 2));
         spinner.text = 'Restored project-level configuration';
 
         if (backupData.projectPath && backupData.projectPath !== process.cwd()) {
-          console.log(chalk.yellow(`Note: Project config was from ${backupData.projectPath}`));
+          console.log(chalk.yellow(`Note: Project config was from ${String(backupData.projectPath)}`));
         }
       }
 
@@ -864,10 +865,10 @@ export async function restoreConfig(backupPath: string): Promise<void> {
 
       // Show what was restored
       const restored = [];
-      if (backupData.configs.user) {
+      if (configs && configs.user) {
         restored.push('User-level (global)');
       }
-      if (backupData.configs.project) {
+      if (configs && configs.project) {
         restored.push('Project-level');
       }
       console.log(chalk.gray(`Restored: ${restored.join(', ')}`));
@@ -913,7 +914,7 @@ export async function restoreUserConfig(backupPath: string): Promise<void> {
 
     // Read backup file
     const backupDataStr = await fs.readFile(backupPath, 'utf-8');
-    let backupData: any;
+    let backupData: Record<string, unknown>;
 
     // Parse and validate JSON
     try {
@@ -929,14 +930,15 @@ export async function restoreUserConfig(backupPath: string): Promise<void> {
       spinner.fail('Invalid backup type');
       console.log(
         chalk.yellow(
-          `This backup file contains ${backupData.type} configuration, not user configuration.`
+          `This backup file contains ${String(backupData.type)} configuration, not user configuration.`
         )
       );
       return;
     }
 
     // Check for user config in backup
-    const userConfig = backupData.configs?.user || (backupData.mcpServers ? backupData : null);
+    const configs = backupData.configs as Record<string, unknown> | undefined;
+    const userConfig = configs?.user || (backupData.mcpServers ? backupData : null);
     if (!userConfig) {
       spinner.fail('No user configuration found in backup');
       console.log(chalk.yellow('This backup file does not contain user configuration.'));
@@ -982,7 +984,7 @@ export async function restoreProjectConfig(backupPath: string): Promise<void> {
 
     // Read backup file
     const backupDataStr = await fs.readFile(backupPath, 'utf-8');
-    let backupData: any;
+    let backupData: Record<string, unknown>;
 
     // Parse and validate JSON
     try {
@@ -998,14 +1000,15 @@ export async function restoreProjectConfig(backupPath: string): Promise<void> {
       spinner.fail('Invalid backup type');
       console.log(
         chalk.yellow(
-          `This backup file contains ${backupData.type} configuration, not project configuration.`
+          `This backup file contains ${String(backupData.type)} configuration, not project configuration.`
         )
       );
       return;
     }
 
     // Check for project config in backup
-    if (!backupData.configs?.project) {
+    const configs = backupData.configs as Record<string, unknown> | undefined;
+    if (!configs?.project) {
       spinner.fail('No project configuration found in backup');
       console.log(chalk.yellow('This backup file does not contain project configuration.'));
       return;
@@ -1023,11 +1026,11 @@ export async function restoreProjectConfig(backupPath: string): Promise<void> {
       // No existing config
     }
 
-    await fs.writeFile(projectConfigPath, JSON.stringify(backupData.configs.project, null, 2));
+    await fs.writeFile(projectConfigPath, JSON.stringify(configs.project, null, 2));
     spinner.succeed('Project configuration restored successfully');
 
     if (backupData.projectPath && backupData.projectPath !== process.cwd()) {
-      console.log(chalk.yellow(`Note: Project config was from ${backupData.projectPath}`));
+      console.log(chalk.yellow(`Note: Project config was from ${String(backupData.projectPath)}`));
     }
   } catch (error) {
     spinner.fail('Failed to restore project configuration from backup');
