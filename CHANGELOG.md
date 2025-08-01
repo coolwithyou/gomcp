@@ -5,102 +5,58 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
-## [Unreleased]
+## [0.1.0] - 2024-08-01
 
 ### Added
-- Comprehensive test suite with Jest
-- ESLint and Prettier configuration
-- GitHub Actions CI/CD pipeline
-- Contributing guidelines
-- Issue and PR templates
-- Separate backup/restore functionality for user and project configurations
-  - `backupUserConfig()` - Backup only user-level configuration
-  - `backupProjectConfig()` - Backup only project-level configuration
-  - `restoreUserConfig()` - Restore only user-level configuration
-  - `restoreProjectConfig()` - Restore only project-level configuration
-  - New backup format (v2.1) with type field to distinguish backup types
-  - Enhanced UI with submenu for backup/restore operations
-- Project-only MCP server support
-  - `forceProjectScope` field to enforce project-level installation
-  - `preferredScope` field to recommend installation scope
-  - Visual indicators in UI (🔒 for project-only, 📁 for project-preferred)
-  - `--force` flag to override scope recommendations
-  - Serena and Memory Bank marked as project-only servers
-  - PostgreSQL, Supabase, and Jupyter marked as project-preferred
-
-### Changed
-- `backupConfig()` and `restoreConfig()` now support both legacy and new backup formats
-- Backup file naming convention:
-  - User backups: `mcp-user-backup-{timestamp}.json`
-  - Project backups: `mcp-project-backup-{timestamp}.json`
-  - Full backups: `mcp-backup-{timestamp}.json`
-- Server installation now validates scope requirements
-- Interactive UI displays scope preferences for each server
-- README documentation expanded with project vs user-level MCP guidance
-
-## [1.0.0] - 2024-01-15
-
-### Added
-- Initial release of gomcp
-- Interactive CLI for installing MCP servers
-- Support for 25+ MCP servers across different categories
-- Preset installations (recommended, dev, data, web, productivity)
+- Initial release of gomcp - Interactive MCP Setup for Claude Code
+- Interactive CLI for installing and managing MCP servers
+- Support for 30+ MCP servers across multiple categories
+- Preset collections for quick setup (recommended, dev, data, web, productivity)
 - User (global) and project-level installation scopes
-- Server configuration management with validation
-- Backup and restore functionality
-- Update checking and server updates
-- Verification of installed servers
-- Custom preset support
-- Comprehensive server categorization:
-  - Essential: GitHub, File System, Context7
-  - Development: Sequential Thinking, PostgreSQL, Docker, Puppeteer, etc.
-  - Productivity: Slack, Notion, Memory Bank
-  - Data & Analytics: Jupyter, Excel
-  - Automation: Zapier, Stripe
-  - Social: Discord, Email
+- Configuration backup and restore functionality
+- Automatic server updates detection
+- Comprehensive test suite with 31 tests
+- TypeScript support with full type definitions
+- Beautiful terminal UI with Inquirer.js and Chalk
 
 ### Features
-- 📦 Interactive server selection with categories
-- 🎯 Smart server recommendations
-- ⚡ Quick preset installations
+- 📦 Smart categorization of MCP servers (Essential, Development, Productivity, Data, etc.)
+- 🎯 Interactive checkbox selection for choosing servers
+- ⚡ Quick installation with preset collections
 - 🔧 Guided configuration for servers requiring API keys
-- ✅ Installation verification
-- 💾 Configuration backup/restore
-- 🌍 Multi-scope support (user/project)
-- 🔄 Server update management
+- ✅ Installation verification with `/mcp` command
+- 💾 Flexible backup/restore (user-only, project-only, or all)
+- 🌍 Multi-scope support for user and project installations
+- 🔄 Update management for installed servers
+- 🔒 Project-only servers (Serena, Memory Bank) with scope enforcement
+- 📁 Project-preferred servers with recommendations
 
-### Technical Details
+### Supported MCP Servers
+- **Essential**: GitHub, File System, Context7, Sequential Thinking
+- **Development**: PostgreSQL, Docker, Puppeteer, Playwright, Sourcegraph, Serena
+- **Productivity**: Slack, Notion, Memory Bank, Email, Discord
+- **Data & Analytics**: Jupyter, Excel, SciPy
+- **Automation**: Zapier, Stripe
+- **Search**: DuckDuckGo, Brave Search
+- **Media**: YouTube, Figma
+
+### Technical Implementation
 - Built with TypeScript for type safety
-- Uses Commander.js for CLI parsing
+- ESM modules for modern JavaScript
+- Commander.js for CLI argument parsing
 - Inquirer.js for interactive prompts
-- Chalk for colorful output
-- Ora for spinner animations
+- Chalk for beautiful terminal colors
+- Ora for elegant loading spinners
 - Execa for subprocess management
+- Jest for testing with focused test suite
+- Proper error handling and validation
 
-## [0.9.0] - 2024-01-10 (Beta)
+### Project Structure
+- Clean separation of concerns (UI, business logic, data)
+- Modular architecture for easy maintenance
+- Comprehensive type definitions
+- Well-documented codebase
 
-### Added
-- Beta release for testing
-- Core installation functionality
-- Basic server definitions
-- Interactive mode
+This is the first public release of gomcp. We're excited to help developers set up MCP servers for Claude Code quickly and easily!
 
-### Changed
-- Refined server categorization
-- Improved error handling
-
-### Fixed
-- Installation issues with certain servers
-- Config file permissions
-
-## [0.1.0] - 2024-01-01 (Alpha)
-
-### Added
-- Initial proof of concept
-- Basic CLI structure
-- Support for essential servers only
-
-[Unreleased]: https://github.com/yourusername/gomcp/compare/v1.0.0...HEAD
-[1.0.0]: https://github.com/yourusername/gomcp/compare/v0.9.0...v1.0.0
-[0.9.0]: https://github.com/yourusername/gomcp/compare/v0.1.0...v0.9.0
-[0.1.0]: https://github.com/yourusername/gomcp/releases/tag/v0.1.0
+[0.1.0]: https://github.com/coolwithyou/gomcp/releases/tag/v0.1.0

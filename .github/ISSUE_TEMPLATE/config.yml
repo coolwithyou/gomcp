@@ -1,0 +1,11 @@
+blank_issues_enabled: false
+contact_links:
+  - name: 💬 Discussions
+    url: https://github.com/yourusername/gomcp/discussions
+    about: Ask questions and discuss ideas with the community
+  - name: 📚 Documentation
+    url: https://github.com/yourusername/gomcp#readme
+    about: Check out the README for usage instructions
+  - name: 🚀 Claude Code Documentation
+    url: https://docs.anthropic.com/en/docs/claude-code
+    about: Learn more about Claude Code and MCP

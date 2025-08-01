@@ -7,9 +7,6 @@
 
 > 🚀 Install and manage MCP (Model Context Protocol) servers for Claude Code with an interactive CLI
 
-<p align="center">
-  <!-- Demo GIF will be added here -->
-</p>
 
 ## Table of Contents
 
@@ -279,9 +276,9 @@ For the File System server, you can select which directories Claude can access:
 
 ### Configuration Files
 
-- **User config**: `~/.gomcp/config.json` - Stores gomcp preferences
-- **MCP config**: `~/.claude/mcp.json` or `./.claude/mcp.json` - MCP server configurations
-- **Backups**: `~/.gomcp/backups/` - Configuration backups
+- **User config**: `~/.claude/config.json` - Claude Code configuration
+- **Project config**: `./.mcp.json` - Project-specific MCP servers
+- **Backups**: Created in current directory with timestamp
 
 ## Project Structure
 
