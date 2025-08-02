@@ -2,11 +2,11 @@ import chalk from 'chalk';
 import ora from 'ora';
 import { execa } from 'execa';
 import { generateChangelog } from '../utils/changelog.js';
-import { 
-  getCurrentBranch, 
-  hasUncommittedChanges, 
+import {
+  getCurrentBranch,
+  hasUncommittedChanges,
   getLatestTag,
-  pushWithTags 
+  pushWithTags
 } from '../utils/git.js';
 
 export type ReleaseType = 'patch' | 'minor' | 'major';
@@ -106,7 +106,7 @@ export async function runRelease(releaseType: ReleaseType, options: ReleaseOptio
     try {
       const latestTag = await getLatestTag();
       const changelogEntry = await generateChangelog(cleanNewVersion, latestTag);
-      
+
       if (options.dryRun) {
         changelogSpinner.info('[DRY RUN] Would update CHANGELOG.md with:');
         console.log(chalk.gray(changelogEntry));
@@ -114,7 +114,7 @@ export async function runRelease(releaseType: ReleaseType, options: ReleaseOptio
         // Update CHANGELOG.md
         const fs = await import('fs/promises');
         const changelogPath = 'CHANGELOG.md';
-        
+
         try {
           const existingChangelog = await fs.readFile(changelogPath, 'utf-8');
           // Insert new entry after the title
@@ -128,7 +128,7 @@ export async function runRelease(releaseType: ReleaseType, options: ReleaseOptio
           const newChangelog = `# Changelog\n\n${changelogEntry}`;
           await fs.writeFile(changelogPath, newChangelog);
         }
-        
+
         changelogSpinner.succeed('Changelog updated');
       }
     } catch (error) {
@@ -185,7 +185,7 @@ export async function runRelease(releaseType: ReleaseType, options: ReleaseOptio
     console.log(chalk.gray('  - Run tests'));
     console.log(chalk.gray('  - Create GitHub release'));
     console.log(chalk.gray('  - Publish to npm'));
-    console.log(chalk.gray(`\nTrack progress at: https://github.com/coolwithyou/gomcp/actions`));
+    console.log(chalk.gray('\nTrack progress at: https://github.com/coolwithyou/gomcp/actions'));
 
   } catch (error) {
     console.error(chalk.red('\n❌ Release failed:'), error);

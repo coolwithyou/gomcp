@@ -25,7 +25,7 @@ const COMMIT_TYPES: Record<string, string> = {
 export async function generateChangelog(newVersion: string, fromTag?: string): Promise<string> {
   const commits = await getCommitsSinceTag(fromTag);
   const categorizedCommits = categorizeCommits(commits);
-  
+
   const date = new Date().toISOString().split('T')[0];
   let changelog = `## [${newVersion}] - ${date}\n\n`;
 
@@ -60,7 +60,7 @@ export async function generateChangelog(newVersion: string, fromTag?: string): P
 
 async function getCommitsSinceTag(fromTag?: string): Promise<CommitInfo[]> {
   let range = fromTag ? `${fromTag}..HEAD` : 'HEAD';
-  
+
   // If no tag specified, get commits since last tag
   if (!fromTag) {
     try {
@@ -108,7 +108,7 @@ function parseCommit(hash: string, subject: string, body?: string): CommitInfo |
 
   // Parse conventional commit format
   const conventionalMatch = subject.match(/^(\w+)(?:\(([^)]+)\))?(!)?:\s*(.+)$/);
-  
+
   if (conventionalMatch) {
     const [, type, scope, breaking, description] = conventionalMatch;
     return {

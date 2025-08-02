@@ -638,7 +638,7 @@ export async function backupConfig(): Promise<void> {
   const spinner = ora('Creating backup...').start();
 
   try {
-    const backupData: any = {
+    const backupData: Record<string, unknown> = {
       version: '2.0',
       timestamp: new Date().toISOString(),
       configs: {} as Record<string, unknown>,
@@ -685,10 +685,11 @@ export async function backupConfig(): Promise<void> {
 
     // Show what was backed up
     const backedUp = [];
-    if (backupData.configs.user) {
+    const configs = backupData.configs as Record<string, unknown>;
+    if (configs.user) {
       backedUp.push('User-level (global)');
     }
-    if (backupData.configs.project) {
+    if (configs.project) {
       backedUp.push(`Project-level (${path.basename(process.cwd())})`);
     }
     console.log(chalk.gray(`Backed up: ${backedUp.join(', ')}`));
@@ -702,7 +703,7 @@ export async function backupUserConfig(): Promise<void> {
   const spinner = ora('Creating user configuration backup...').start();
 
   try {
-    const backupData: any = {
+    const backupData: Record<string, unknown> = {
       version: '2.1',
       type: 'user',
       timestamp: new Date().toISOString(),
@@ -739,7 +740,7 @@ export async function backupProjectConfig(): Promise<void> {
   const spinner = ora('Creating project configuration backup...').start();
 
   try {
-    const backupData: any = {
+    const backupData: Record<string, unknown> = {
       version: '2.1',
       type: 'project',
       timestamp: new Date().toISOString(),

@@ -16,7 +16,7 @@ export async function promptWithEscape<T extends Answers = Answers>(
     const enhancedQuestions = modifiedQuestions.map((q: DistinctQuestion) => {
       if (q.type === 'list' && q.choices) {
         // Add back option to list choices
-        const choices: any[] = [...(q.choices as Array<{ name: string; value: string }>)];
+        const choices: Array<{ name: string; value: string } | inquirer.Separator> = [...(q.choices as Array<{ name: string; value: string }>)];
         choices.push(new inquirer.Separator());
         choices.push({ name: '← Back to previous menu', value: '__BACK__' });
 

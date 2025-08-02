@@ -32,7 +32,7 @@ export async function isRepositoryClean(): Promise<boolean> {
   try {
     const { stdout: status } = await execa('git', ['status', '--porcelain']);
     const { stdout: unpushed } = await execa('git', ['cherry', '-v']);
-    
+
     return status.trim() === '' && unpushed.trim() === '';
   } catch {
     return false;
@@ -48,7 +48,7 @@ export async function isUpToDate(): Promise<boolean> {
     await fetchRemote();
     const { stdout: local } = await execa('git', ['rev-parse', 'HEAD']);
     const { stdout: remote } = await execa('git', ['rev-parse', 'origin/main']);
-    
+
     return local.trim() === remote.trim();
   } catch {
     return false;
