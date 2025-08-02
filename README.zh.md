@@ -147,25 +147,78 @@ gomcp --help
 ### 必备
 - 🐙 **GitHub** - 连接到 GitHub API 处理议题、PR 和 CI/CD
 - 📁 **File System** - 读写机器上的文件
-- 📚 **Context7** - 访问任何库的文档
+- 📚 **Context7** - 访问库的最新文档和代码示例
+- 🧠 **Sequential Thinking** - 将复杂任务分解为逻辑步骤
 
 ### 开发
-- 🧠 **Sequential Thinking** - 逐步分解复杂任务
-- 🐘 **PostgreSQL** - 使用自然语言查询数据库
-- 🌐 **Puppeteer** - 自动化 Web 浏览器交互
-- 🐳 **Docker** - 管理容器和镜像
-- 🔍 **Sourcegraph** - 跨仓库代码搜索
+- 🐘 **PostgreSQL** - 使用自然语言查询 PostgreSQL 数据库
+- 🌐 **Puppeteer** - Web 浏览器自动化和测试
+- 🎭 **Playwright** - 使用可访问性树的跨浏览器自动化
+- 🐳 **Docker** - 管理容器、镜像和 Docker 工作流
+- 🛠️ **Serena** - 具有语义检索和编辑功能的强大编码代理工具包
+- 🔧 **Browser Tools** - 监控浏览器日志和自动化浏览器任务
+- 🌐 **Chrome** - 使用20多个工具控制 Chrome 浏览器
+- 🎨 **Figma** - 设计到代码的工作流集成
+- 🍃 **Supabase** - 管理 Supabase 数据库和身份验证
 
 ### 生产力
-- 💬 **Slack** - 团队通信集成
-- 📝 **Notion** - 访问和管理工作区
-- 💾 **Memory Bank** - 跨会话持久内存
-- 📧 **Email** - 发送和管理电子邮件
+- 💬 **Slack** - 团队通信的 Slack 集成
+- 📝 **Notion** - 访问和管理 Notion 工作区
+- 💾 **Memory Bank** - Claude 会话间的持久内存
+- 📧 **Email** - 发送邮件和管理附件
+- 📊 **Google Suite** - 访问 Google Docs、Sheets 和 Drive
+- 📈 **Excel** - 创建和修改 Excel 文件
 
 ### 数据与分析
-- 📊 **Jupyter** - 交互式计算和数据科学
-- 📈 **Excel** - 读取和操作电子表格
-- 🔬 **SciPy** - 科学计算工具
+- 📊 **Jupyter** - 在 Jupyter 笔记本中执行代码
+- 🔬 **Everything Search** - 跨操作系统的快速文件搜索
+- 🌍 **EVM** - 面向30多个EVM网络的综合区块链服务
+- 🔑 **Redis** - 数据库操作和缓存微服务
+
+### 搜索与Web
+- 🦆 **DuckDuckGo** - 无需 API 密钥的隐私优先 Web 搜索
+- 🦁 **Brave Search** - 使用 API 的隐私优先 Web 搜索
+- 📸 **Screenshot** - 使用高级功能捕获网站截图
+
+### 自动化与集成
+- ⚡ **Zapier** - 跨5000多个应用自动化工作流
+- 💳 **Stripe** - 集成 Stripe 支付 API
+- 🎥 **YouTube** - 提取 YouTube 视频元数据和字幕
+- 🔌 **Discord** - Discord 服务器的机器人自动化
+
+### AI与机器学习
+- 🤖 **Replicate** - 搜索、运行和管理机器学习模型
+- 🧠 **Hyperbolic** - 与 Hyperbolic GPU 云服务交互
+- 📈 **Databricks** - Databricks 的 SQL 查询和作业管理
+
+### DevOps与基础设施
+- ☸️ **Kubernetes (mcp-k8s-go)** - 浏览 Kubernetes pods、日志、事件和命名空间
+- 📊 **HAProxy** - 管理和监控 HAProxy 配置
+- 🌐 **Netbird** - 分析 Netbird 网络对等体、组和策略
+- 🔥 **OPNSense** - OPNSense 防火墙管理和 API 访问
+
+### 域名与安全
+- 🔍 **Domain Tools** - 使用 WHOIS 和 DNS 进行综合域名分析
+- 📡 **Splunk** - 访问 Splunk 保存的搜索、警报和索引
+
+### 区块链与加密货币
+- 🟣 **Solana Agent Kit** - 与 Solana 区块链交互（40多个协议操作）
+- ⚡ **EVM** - 多链 EVM 区块链集成
+
+### 求职与职业
+- 💼 **Reed Jobs** - 从 Reed.co.uk 搜索和检索职位列表
+
+### 时间与实用工具
+- ⏰ **Time** - 获取当前时间并在时区间转换
+- 🔧 **Everything** - 具有综合功能的快速文件搜索
+
+### 元工具
+- 🛠️ **MCP Compass** - 为特定需求建议合适的 MCP 服务器
+- 🏗️ **MCP Server Creator** - 动态生成其他 MCP 服务器
+- 📦 **MCP Installer** - 安装其他 MCP 服务器
+- 🔄 **MCP Proxy** - 聚合多个 MCP 资源服务器
+
+### 还有更多服务器...
 
 运行 `gomcp --list` 查看所有可用服务器及说明。
 

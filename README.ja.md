@@ -147,25 +147,78 @@ gomcp --help
 ### 必須
 - 🐙 **GitHub** - イシュー、PR、CI/CDのためのGitHub API接続
 - 📁 **File System** - マシン上のファイルの読み書き
-- 📚 **Context7** - あらゆるライブラリのドキュメントへのアクセス
+- 📚 **Context7** - ライブラリの最新ドキュメントとコード例へのアクセス
+- 🧠 **Sequential Thinking** - 複雑なタスクを論理的なステップに分解
 
 ### 開発
-- 🧠 **Sequential Thinking** - 複雑なタスクをステップごとに分解
-- 🐘 **PostgreSQL** - 自然言語でデータベースをクエリ
-- 🌐 **Puppeteer** - Webブラウザの自動化
-- 🐳 **Docker** - コンテナとイメージの管理
-- 🔍 **Sourcegraph** - リポジトリ全体のコード検索
+- 🐘 **PostgreSQL** - 自然言語でPostgreSQLデータベースをクエリ
+- 🌐 **Puppeteer** - Webブラウザの自動化とテスト
+- 🎭 **Playwright** - アクセシビリティツリーを使用したクロスブラウザ自動化
+- 🐳 **Docker** - コンテナ、イメージ、Dockerワークフローの管理
+- 🛠️ **Serena** - セマンティック検索と編集機能を持つ強力なコーディングエージェントツールキット
+- 🔧 **Browser Tools** - ブラウザログの監視とブラウザタスクの自動化
+- 🌐 **Chrome** - 20以上のツールでChromeブラウザを制御
+- 🎨 **Figma** - デザインからコードへのワークフロー統合
+- 🍃 **Supabase** - Supabaseデータベースと認証の管理
 
 ### 生産性
-- 💬 **Slack** - チームコミュニケーションの統合
-- 📝 **Notion** - ワークスペースへのアクセスと管理
-- 💾 **Memory Bank** - セッション間の永続的なメモリ
-- 📧 **Email** - メールの送信と管理
+- 💬 **Slack** - チームコミュニケーションのためのSlack統合
+- 📝 **Notion** - Notionワークスペースへのアクセスと管理
+- 💾 **Memory Bank** - Claudeセッション間の永続的なメモリ
+- 📧 **Email** - メールの送信と添付ファイルの管理
+- 📊 **Google Suite** - Google Docs、Sheets、Driveへのアクセス
+- 📈 **Excel** - Excelファイルの作成と変更
 
 ### データ＆分析
-- 📊 **Jupyter** - インタラクティブコンピューティングとデータサイエンス
-- 📈 **Excel** - スプレッドシートの読み取りと操作
-- 🔬 **SciPy** - 科学計算ツール
+- 📊 **Jupyter** - Jupyterノートブックでのコード実行
+- 🔬 **Everything Search** - オペレーティングシステム全体での高速ファイル検索
+- 🌍 **EVM** - 30以上のEVMネットワークの包括的なブロックチェーンサービス
+- 🔑 **Redis** - データベース操作とキャッシングマイクロサービス
+
+### 検索＆Web
+- 🦆 **DuckDuckGo** - APIキー不要のプライバシー重視Web検索
+- 🦁 **Brave Search** - APIを使用したプライバシー重視Web検索
+- 📸 **Screenshot** - 高度な機能でWebサイトのスクリーンショットをキャプチャ
+
+### 自動化＆統合
+- ⚡ **Zapier** - 5,000以上のアプリでワークフローを自動化
+- 💳 **Stripe** - Stripe決済APIとの統合
+- 🎥 **YouTube** - YouTubeビデオのメタデータとトランスクリプトを抽出
+- 🔌 **Discord** - Discordサーバー用のボット自動化
+
+### AI＆ML
+- 🤖 **Replicate** - 機械学習モデルの検索、実行、管理
+- 🧠 **Hyperbolic** - HyperbolicのGPUクラウドサービスとの相互作用
+- 📈 **Databricks** - DatabricksのSQLクエリとジョブ管理
+
+### DevOps＆インフラ
+- ☸️ **Kubernetes (mcp-k8s-go)** - Kubernetesポッド、ログ、イベント、ネームスペースの閲覧
+- 📊 **HAProxy** - HAProxy設定の管理と監視
+- 🌐 **Netbird** - Netbirdネットワークピア、グループ、ポリシーの分析
+- 🔥 **OPNSense** - OPNSenseファイアウォール管理とAPIアクセス
+
+### ドメイン＆セキュリティ
+- 🔍 **Domain Tools** - WHOISとDNSによる包括的なドメイン分析
+- 📡 **Splunk** - Splunk保存検索、アラート、インデックスへのアクセス
+
+### ブロックチェーン＆暗号通貨
+- 🟣 **Solana Agent Kit** - Solanaブロックチェーンとの相互作用（40以上のプロトコルアクション）
+- ⚡ **EVM** - マルチチェーンEVMブロックチェーン統合
+
+### 求人＆キャリア
+- 💼 **Reed Jobs** - Reed.co.ukから求人リストを検索・取得
+
+### 時間＆ユーティリティ
+- ⏰ **Time** - 現在時刻の取得とタイムゾーン間の変換
+- 🔧 **Everything** - 包括的な機能での高速ファイル検索
+
+### メタツール
+- 🛠️ **MCP Compass** - 特定のニーズに適切なMCPサーバーを提案
+- 🏗️ **MCP Server Creator** - 他のMCPサーバーを動的に生成
+- 📦 **MCP Installer** - 他のMCPサーバーをインストール
+- 🔄 **MCP Proxy** - 複数のMCPリソースサーバーを集約
+
+### さらに多くのサーバー...
 
 すべてのサーバーと説明を見るには`gomcp --list`を実行してください。
 

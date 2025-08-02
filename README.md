@@ -219,25 +219,76 @@ When installing a server at a non-recommended scope, gomcp will warn you about p
 ### Essential
 - 🐙 **GitHub** - Connect to GitHub API for issues, PRs, and CI/CD
 - 📁 **File System** - Read and write files on your machine
-- 📚 **Context7** - Access documentation for any library
+- 📚 **Context7** - Access up-to-date documentation and code examples for libraries
+- 🧠 **Sequential Thinking** - Break down complex tasks into logical steps
 
 ### Development
-- 🧠 **Sequential Thinking** - Break down complex tasks step by step
-- 🐘 **PostgreSQL** - Query databases with natural language
-- 🌐 **Puppeteer** - Automate web browser interactions
-- 🐳 **Docker** - Manage containers and images
-- 🔍 **Sourcegraph** - Code search across repositories
+- 🐘 **PostgreSQL** - Query PostgreSQL databases with natural language
+- 🌐 **Puppeteer** - Automate web browser interactions and testing
+- 🎭 **Playwright** - Cross-browser automation with accessibility tree
+- 🐳 **Docker** - Manage containers, images, and Docker workflows
+- 🛠️ **Serena** - Powerful coding agent toolkit with semantic retrieval and editing
+- 🔧 **Browser Tools** - Monitor browser logs and automate browser tasks
+- 🌐 **Chrome** - Control Chrome browser with 20+ tools for automation
+- 🎨 **Figma** - Design-to-code workflow integration
+- 🍃 **Supabase** - Manage Supabase databases and authentication
 
 ### Productivity
-- 💬 **Slack** - Team communication integration
-- 📝 **Notion** - Access and manage workspaces
-- 💾 **Memory Bank** - Persistent memory across sessions
-- 📧 **Email** - Send and manage emails
+- 💬 **Slack** - Integrate with Slack for team communication
+- 📝 **Notion** - Access and manage Notion workspaces
+- 💾 **Memory Bank** - Persistent memory across Claude sessions
+- 📧 **Email** - Send emails and manage attachments
+- 📊 **Google Suite** - Access Google Docs, Sheets, and Drive
+- 📈 **Excel** - Create and modify Excel files
 
 ### Data & Analytics
-- 📊 **Jupyter** - Interactive computing and data science
-- 📈 **Excel** - Read and manipulate spreadsheets
-- 🔬 **SciPy** - Scientific computing tools
+- 📊 **Jupyter** - Execute code in Jupyter notebooks
+- 🔬 **Everything Search** - Fast file searching across operating systems
+- 🌍 **EVM** - Comprehensive blockchain services for 30+ EVM networks
+- 🔑 **Redis** - Database operations and caching microservice
+
+### Search & Web
+- 🦆 **DuckDuckGo** - Privacy-focused web search without API keys
+- 🦁 **Brave Search** - Privacy-focused web search with API
+- 📸 **Screenshot** - Capture website screenshots with advanced features
+
+### Automation & Integration
+- ⚡ **Zapier** - Automate workflows across 5,000+ apps
+- 💳 **Stripe** - Integrate with Stripe payment APIs
+- 🎥 **YouTube** - Extract YouTube video metadata and transcripts
+- 🔌 **Discord** - Bot automation for Discord servers
+
+### AI & ML
+- 🤖 **Replicate** - Search, run, and manage machine learning models
+- 🧠 **Hyperbolic** - Interact with Hyperbolic's GPU cloud services
+- 📈 **Databricks** - SQL queries and job management for Databricks
+
+### DevOps & Infrastructure
+- ☸️ **Kubernetes (mcp-k8s-go)** - Browse Kubernetes pods, logs, events, and namespaces
+- 📊 **HAProxy** - Manage and monitor HAProxy configurations
+- 🌐 **Netbird** - Analyze Netbird network peers, groups, and policies
+- 🔥 **OPNSense** - OPNSense firewall management and API access
+
+### Domain & Security
+- 🔍 **Domain Tools** - Comprehensive domain analysis with WHOIS and DNS
+- 📡 **Splunk** - Access to Splunk saved searches, alerts, and indexes
+
+### Blockchain & Crypto
+- 🟣 **Solana Agent Kit** - Interact with Solana blockchain (40+ protocol actions)
+- ⚡ **EVM** - Multi-chain EVM blockchain integration
+
+### Job & Career
+- 💼 **Reed Jobs** - Search and retrieve job listings from Reed.co.uk
+
+### Time & Utilities
+- ⏰ **Time** - Get current time and convert between timezones
+- 🔧 **Everything** - Fast file searching with comprehensive features
+
+### Meta Tools
+- 🛠️ **MCP Compass** - Suggest appropriate MCP servers for specific needs
+- 🏗️ **MCP Server Creator** - Generate other MCP servers dynamically
+- 📦 **MCP Installer** - Install other MCP servers
+- 🔄 **MCP Proxy** - Aggregate multiple MCP resource servers
 
 ### And many more...
 

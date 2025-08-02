@@ -147,18 +147,78 @@ gomcp --help
 ### 필수
 - 🐙 **GitHub** - 이슈, PR, CI/CD를 위한 GitHub API 연결
 - 📁 **File System** - 머신의 파일 읽기 및 쓰기
-- 📚 **Context7** - 모든 라이브러리의 문서 접근
+- 📚 **Context7** - 라이브러리의 최신 문서 및 코드 예제 접근
+- 🧠 **Sequential Thinking** - 복잡한 작업을 논리적 단계로 분해
 
 ### 개발
-- 🧠 **Sequential Thinking** - 복잡한 작업을 단계별로 분해
-- 🐘 **PostgreSQL** - 자연어로 데이터베이스 쿼리
-- 🌐 **Puppeteer** - 웹 브라우저 자동화
-- 🐳 **Docker** - 컨테이너 및 이미지 관리
-- 🔍 **Sourcegraph** - 저장소 전체 코드 검색
+- 🐘 **PostgreSQL** - 자연어로 PostgreSQL 데이터베이스 쿼리
+- 🌐 **Puppeteer** - 웹 브라우저 자동화 및 테스팅
+- 🎭 **Playwright** - 접근성 트리를 이용한 크로스브라우저 자동화
+- 🐳 **Docker** - 컨테이너, 이미지, Docker 워크플로 관리
+- 🛠️ **Serena** - 시맨틱 검색 및 편집 기능이 있는 강력한 코딩 에이전트 툴킷
+- 🔧 **Browser Tools** - 브라우저 로그 모니터링 및 브라우저 작업 자동화
+- 🌐 **Chrome** - 20개 이상의 자동화 도구로 Chrome 브라우저 제어
+- 🎨 **Figma** - 디자인-투-코드 워크플로 통합
+- 🍃 **Supabase** - Supabase 데이터베이스 및 인증 관리
 
 ### 생산성
-- 💬 **Slack** - 팀 커뮤니케이션 통합
-- 📝 **Notion** - 워크스페이스 접근 및 관리
+- 💬 **Slack** - 팀 커뮤니케이션을 위한 Slack 통합
+- 📝 **Notion** - Notion 워크스페이스 접근 및 관리
+- 💾 **Memory Bank** - Claude 세션 간 지속적인 메모리
+- 📧 **Email** - 이메일 전송 및 첨부파일 관리
+- 📊 **Google Suite** - Google Docs, Sheets, Drive 접근
+- 📈 **Excel** - Excel 파일 생성 및 수정
+
+### 데이터 & 분석
+- 📊 **Jupyter** - Jupyter 노트북에서 코드 실행
+- 🔬 **Everything Search** - 운영체제 전반의 빠른 파일 검색
+- 🌍 **EVM** - 30개 이상 EVM 네트워크를 위한 포괄적인 블록체인 서비스
+- 🔑 **Redis** - 데이터베이스 작업 및 캐싱 마이크로서비스
+
+### 검색 & 웹
+- 🦆 **DuckDuckGo** - API 키 없이 사용하는 프라이버시 중심 웹 검색
+- 🦁 **Brave Search** - API를 이용한 프라이버시 중심 웹 검색
+- 📸 **Screenshot** - 고급 기능으로 웹사이트 스크린샷 캡처
+
+### 자동화 & 통합
+- ⚡ **Zapier** - 5,000개 이상 앱에서 워크플로 자동화
+- 💳 **Stripe** - Stripe 결제 API 통합
+- 🎥 **YouTube** - YouTube 비디오 메타데이터 및 대본 추출
+- 🔌 **Discord** - Discord 서버용 봇 자동화
+
+### AI & ML
+- 🤖 **Replicate** - 머신러닝 모델 검색, 실행, 관리
+- 🧠 **Hyperbolic** - Hyperbolic GPU 클라우드 서비스와 상호작용
+- 📈 **Databricks** - Databricks용 SQL 쿼리 및 작업 관리
+
+### DevOps & 인프라
+- ☸️ **Kubernetes (mcp-k8s-go)** - Kubernetes 파드, 로그, 이벤트, 네임스페이스 탐색
+- 📊 **HAProxy** - HAProxy 구성 관리 및 모니터링
+- 🌐 **Netbird** - Netbird 네트워크 피어, 그룹, 정책 분석
+- 🔥 **OPNSense** - OPNSense 방화벽 관리 및 API 접근
+
+### 도메인 & 보안
+- 🔍 **Domain Tools** - WHOIS 및 DNS를 이용한 포괄적인 도메인 분석
+- 📡 **Splunk** - Splunk 저장된 검색, 알림, 인덱스 접근
+
+### 블록체인 & 암호화폐
+- 🟣 **Solana Agent Kit** - Solana 블록체인과 상호작용 (40개 이상 프로토콜 액션)
+- ⚡ **EVM** - 멀티체인 EVM 블록체인 통합
+
+### 구직 & 커리어
+- 💼 **Reed Jobs** - Reed.co.uk에서 구인 목록 검색 및 조회
+
+### 시간 & 유틸리티
+- ⏰ **Time** - 현재 시간 조회 및 시간대 간 변환
+- 🔧 **Everything** - 포괄적인 기능으로 빠른 파일 검색
+
+### 메타 도구
+- 🛠️ **MCP Compass** - 특정 요구사항에 적합한 MCP 서버 제안
+- 🏗️ **MCP Server Creator** - 다른 MCP 서버를 동적으로 생성
+- 📦 **MCP Installer** - 다른 MCP 서버 설치
+- 🔄 **MCP Proxy** - 여러 MCP 리소스 서버 집계
+
+### 그리고 더 많은 서버들...
 - 💾 **Memory Bank** - 세션 간 지속적인 메모리
 - 📧 **Email** - 이메일 전송 및 관리
 
