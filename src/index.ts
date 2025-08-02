@@ -11,6 +11,7 @@ import {
 import { servers, presets } from './servers.js';
 import { InstallScope } from './types.js';
 import { displayActivationStatus } from './activation.js';
+import { runRelease, ReleaseType } from './commands/release.js';
 import { readFileSync } from 'fs';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
@@ -129,6 +130,29 @@ async function main(): Promise<void> {
         console.error(chalk.red('Error:'), error);
         process.exit(1);
       }
+    });
+
+  // Add release command
+  program
+    .command('release <type>')
+    .description('Automate npm release process (patch, minor, major)')
+    .option('--skip-tests', 'Skip running tests')
+    .option('--skip-lint', 'Skip running lint')
+    .option('--skip-build', 'Skip running build')
+    .option('--dry-run', 'Perform a dry run without making changes')
+    .action(async (type: string, options: {
+      skipTests?: boolean;
+      skipLint?: boolean;
+      skipBuild?: boolean;
+      dryRun?: boolean;
+    }) => {
+      if (!['patch', 'minor', 'major'].includes(type)) {
+        console.error(chalk.red(`Invalid release type: ${type}`));
+        console.log('Valid types: patch, minor, major');
+        process.exit(1);
+      }
+
+      await runRelease(type as ReleaseType, options);
     });
 
   program.parse();
