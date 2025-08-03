@@ -27,6 +27,9 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
+    "preversion": "npm test && npm run lint",
+    "version": "npm run build && git add dist/",
+    "postversion": "git push && git push --tags",
     "prepublishOnly": "npm run build"
   },
   "keywords": [
