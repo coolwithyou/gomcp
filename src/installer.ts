@@ -10,6 +10,7 @@ import * as os from 'os';
 import { servers, presets } from './servers.js';
 import { MCPServer, ServerConfig, InstallResult, InstallScope } from './types.js';
 import { addProjectServer, removeProjectServer } from './mcp-config.js';
+import { t } from './i18n/index.js';
 
 export async function installServers(
   serverIds: string[],
@@ -17,22 +18,23 @@ export async function installServers(
   scope: InstallScope = 'user',
   force: boolean = false
 ): Promise<void> {
-  console.log(chalk.bold('\n🚀 Installing MCP servers...\n'));
+  console.log(chalk.bold(`\n🚀 ${t('server.installing')}\n`));
 
   const results: InstallResult[] = [];
 
   for (const serverId of serverIds) {
     const server = servers.find((s) => s.id === serverId);
     if (!server) {
-      console.error(chalk.red(`Server ${serverId} not found`));
+      console.error(chalk.red(t('errors.serverNotFound', { serverId })));
       continue;
     }
 
     // Check forceProjectScope
     if (server.forceProjectScope && scope === 'user') {
-      console.error(chalk.red(`\n⛔ ${server.name} is a project-only MCP server.`));
-      console.error(chalk.gray('   It requires project-specific configuration and memory.'));
-      console.error(chalk.gray('   Each project must maintain its own independent instance.\n'));
+      console.error(chalk.red(`\n⛔ ${t('installation.projectOnlyServer', { serverName: server.name })}`));
+      const explanationLines = t('installation.projectOnlyExplanation').split('\n');
+      explanationLines.forEach(line => console.error(chalk.gray(`   ${line}`)));
+      console.error('');
       results.push({
         server,
         success: false,
@@ -49,7 +51,7 @@ export async function installServers(
         )
       );
       console.log(chalk.gray(getWarningMessage(server, scope)));
-      console.log(chalk.gray(`   Use --force flag to install at ${scope} level anyway.\n`));
+      console.log(chalk.gray(`   ${t('server.forceInstallWarning', { scope })}\n`));
       results.push({
         server,
         success: false,
@@ -66,20 +68,20 @@ export async function installServers(
       const config = configs.get(serverId);
       await installServer(server, config, scope, progressBar);
 
-      progressBar.succeed(chalk.green(`${server.name} installed successfully`));
+      progressBar.succeed(chalk.green(`${server.name} ${t('messages.installedSuccessfully')}`));
       results.push({ server, success: true });
     } catch (error) {
-      progressBar.fail(chalk.red(`${server.name} installation failed`));
-      console.error(chalk.gray(`  Error: ${error}`));
+      progressBar.fail(chalk.red(t('errors.installationFailed', { serverName: server.name })));
+      console.error(chalk.gray(`  ${t('errors.errorDetails', { error: String(error) })}`));
       if (error instanceof Error && error.stack) {
-        console.error(chalk.gray(`  Stack: ${error.stack}`));
+        console.error(chalk.gray(`  ${t('errors.stackTrace', { stack: error.stack })}`));
       }
       results.push({ server, success: false, error: String(error) });
     }
   }
 
   // Summary
-  console.log(chalk.bold('\n📊 Installation Summary:\n'));
+  console.log(chalk.bold(`\n📊 ${t('server.installationSummary')}\n`));
 
   const successful = results.filter((r) => r.success);
   const failed = results.filter((r) => !r.success);
@@ -678,7 +680,7 @@ export async function updateServers(): Promise<void> {
         updateProgressBar.succeed(chalk.green(`${server.name} updated successfully`));
       } catch (error) {
         updateProgressBar.fail(chalk.red(`${server.name} update failed`));
-        console.error(chalk.gray(`  Error: ${error}`));
+        console.error(chalk.gray(`  ${t('errors.errorDetails', { error: String(error) })}`));
       }
     }
 
@@ -1145,7 +1147,7 @@ export async function removeServers(
       }
     } catch (error) {
       progressBar.fail(chalk.red(`${serverId} removal failed`));
-      console.error(chalk.gray(`  Error: ${error}`));
+      console.error(chalk.gray(`  ${t('errors.errorDetails', { error: String(error) })}`));
       results.push({ server: serverId, success: false, error: String(error) });
     }
   }
