@@ -1,8 +1,7 @@
 import inquirer, { Answers } from 'inquirer';
 import chalk from 'chalk';
 import {
-  createIndeterminateProgressBar,
-  createTimeBasedProgressBar
+  createIndeterminateProgressBar
 } from './utils/progress.js';
 import { servers } from './servers.js';
 import {
@@ -48,7 +47,7 @@ function clearInstalledServersCache() {
   installedServersCache = null;
 }
 
-export async function mainMenu(defaultScope: InstallScope = 'user', mode?: string) {
+export async function mainMenu(defaultScope: InstallScope = 'user', mode?: string, showDescriptions?: boolean) {
   // If mode is 'remove', go directly to remove flow
   if (mode === 'remove') {
     await removeFlow(defaultScope);
@@ -88,7 +87,7 @@ export async function mainMenu(defaultScope: InstallScope = 'user', mode?: strin
 
   switch (action) {
     case 'install':
-      await installFlow(defaultScope);
+      await installFlow(defaultScope, showDescriptions);
       break;
     case 'list':
       await listInstalledServers('all');
@@ -122,7 +121,7 @@ export async function mainMenu(defaultScope: InstallScope = 'user', mode?: strin
   // Return to main menu after action
   if (action !== 'exit') {
     console.log(''); // Add spacing
-    await mainMenu(defaultScope);
+    await mainMenu(defaultScope, undefined, showDescriptions);
   }
 }
 
@@ -162,7 +161,6 @@ async function getInstalledServersByScope(): Promise<{ user: Set<string>; projec
       if (line.includes('Checking MCP server health') || line.trim() === '') {
         continue;
       }
-      
       // Parse server lines like "github: npx -y @modelcontextprotocol/server-github - ✓ Connected"
       const match = line.match(/^(\S+):\s+(.+?)\s+-\s+(✓|✗)/);
       if (match) {
@@ -193,7 +191,7 @@ async function getInstalledServersByScope(): Promise<{ user: Set<string>; projec
   return result;
 }
 
-async function installFlow(defaultScope: InstallScope = 'user') {
+async function installFlow(defaultScope: InstallScope = 'user', showDescriptions?: boolean) {
   // Ask for installation scope first
   const scopeResult = await promptWithEscape([
     {
@@ -267,8 +265,10 @@ async function installFlow(defaultScope: InstallScope = 'user') {
           checked: server.recommended && !isInstalledInOtherScope,
         });
 
-        // Add single-line description
-        choices.push(new inquirer.Separator(chalk.gray(`   ${server.description}`)));
+        // Add single-line description only if showDescriptions is true
+        if (showDescriptions) {
+          choices.push(new inquirer.Separator(chalk.gray(`   ${server.description}`)));
+        }
       }
     }
   }
@@ -295,7 +295,7 @@ async function installFlow(defaultScope: InstallScope = 'user') {
       chalk.yellow('\nNo servers selected. Please select at least one server to install.')
     );
     // Re-run the installation flow
-    return installFlow(defaultScope);
+    return installFlow(defaultScope, showDescriptions);
   }
 
   // Collect configurations for selected servers

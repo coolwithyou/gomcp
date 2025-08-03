@@ -47,7 +47,6 @@ export async function getProjectServersActivationStatus(): Promise<ServerActivat
     progressBar.nextStep();
     const statuses: ServerActivationStatus[] = [];
     const totalServers = projectServerIds.length;
-    let processedServers = 0;
 
     for (const serverId of projectServerIds) {
       const server = servers.find((s) => s.id === serverId);
@@ -77,7 +76,6 @@ export async function getProjectServersActivationStatus(): Promise<ServerActivat
         activationType,
       });
 
-      processedServers++;
       // Update progress within the current step
       if (totalServers > 0) {
         // For step progress bars, we don't update individual progress
