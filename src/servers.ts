@@ -925,6 +925,20 @@ export const servers: MCPServer[] = [
         label: 'Server Configuration',
         description: 'JSON array of server configurations',
         required: true,
+        validate: (value: unknown) => {
+          if (!value || typeof value !== 'string') {
+            return 'Server configuration is required';
+          }
+          try {
+            const parsed = JSON.parse(value);
+            if (!Array.isArray(parsed)) {
+              return 'Configuration must be a JSON array';
+            }
+            return true;
+          } catch {
+            return 'Invalid JSON format';
+          }
+        },
       },
     ],
   },

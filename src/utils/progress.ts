@@ -10,6 +10,12 @@ export interface ProgressOptions {
   format?: string;
 }
 
+export interface ProgressPayload {
+  label?: string;
+  eta_formatted?: string;
+  [key: string]: unknown;
+}
+
 export class ProgressBar {
   private bar: cliProgress.SingleBar;
   private startTime: number;
@@ -61,8 +67,8 @@ export class ProgressBar {
     return format;
   }
 
-  update(current: number, payload?: Record<string, any>): void {
-    const updatePayload: Record<string, any> = {
+  update(current: number, payload?: ProgressPayload): void {
+    const updatePayload: ProgressPayload = {
       label: payload?.label || this.label,
       ...payload
     };
@@ -81,7 +87,7 @@ export class ProgressBar {
     this.bar.update(current, updatePayload);
   }
 
-  increment(delta: number = 1, payload?: Record<string, any>): void {
+  increment(delta: number = 1, payload?: ProgressPayload): void {
     const current = this.currentValue + delta;
     this.update(current, payload);
   }
@@ -359,6 +365,7 @@ export class TimeBasedProgressBar {
 export class MultiProgressBar {
   private multiBar: cliProgress.MultiBar;
   private bars: Map<string, cliProgress.SingleBar> = new Map();
+  private barValues: Map<string, number> = new Map();
 
   constructor() {
     this.multiBar = new cliProgress.MultiBar({
@@ -375,6 +382,7 @@ export class MultiProgressBar {
       status: 'Starting...'
     });
     this.bars.set(id, bar);
+    this.barValues.set(id, 0);
     return bar;
   }
 
@@ -382,6 +390,7 @@ export class MultiProgressBar {
     const bar = this.bars.get(id);
     if (bar) {
       bar.update(current, { status: status || 'Processing...' });
+      this.barValues.set(id, current);
     }
   }
 
@@ -395,7 +404,7 @@ export class MultiProgressBar {
   fail(id: string, message?: string): void {
     const bar = this.bars.get(id);
     if (bar) {
-      const currentValue = (bar as any).value || 0;
+      const currentValue = this.barValues.get(id) || 0;
       bar.update(currentValue, { status: chalk.red(message || 'Failed') });
     }
   }
