@@ -1,5 +1,8 @@
 import chalk from 'chalk';
-import ora from 'ora';
+import {
+  createStepProgressBar,
+  createIndeterminateProgressBar
+} from './utils/progress.js';
 import { getProjectServers } from './mcp-config.js';
 import {
   readClaudeSettings,
@@ -25,14 +28,26 @@ export interface ServerActivationStatus {
  * Get activation status for all project servers
  */
 export async function getProjectServersActivationStatus(): Promise<ServerActivationStatus[]> {
-  const spinner = ora('Checking server activation status...').start();
+  const steps = [
+    { name: 'Getting project servers', weight: 20 },
+    { name: 'Fetching activation status', weight: 20 },
+    { name: 'Checking server statuses', weight: 60 }
+  ];
+
+  const progressBar = createStepProgressBar({ steps });
 
   try {
     // Get installed project servers
+    progressBar.nextStep();
     const projectServerIds = await getProjectServers();
+
+    progressBar.nextStep();
     const activationStatus = await getActivationStatus();
 
+    progressBar.nextStep();
     const statuses: ServerActivationStatus[] = [];
+    const totalServers = projectServerIds.length;
+    let processedServers = 0;
 
     for (const serverId of projectServerIds) {
       const server = servers.find((s) => s.id === serverId);
@@ -61,12 +76,19 @@ export async function getProjectServersActivationStatus(): Promise<ServerActivat
         isActivated,
         activationType,
       });
+
+      processedServers++;
+      // Update progress within the current step
+      if (totalServers > 0) {
+        // For step progress bars, we don't update individual progress
+        // The progress is managed by the step transitions
+      }
     }
 
-    spinner.succeed('Server activation status checked');
+    progressBar.succeed('Server activation status checked');
     return statuses;
   } catch (error) {
-    spinner.fail('Failed to check activation status');
+    progressBar.fail('Failed to check activation status');
     throw error;
   }
 }
@@ -135,29 +157,31 @@ export async function activateServers(
   serverIds: string[],
   strategy: 'all' | 'specific' | 'permission'
 ): Promise<void> {
-  const spinner = ora('Activating servers...').start();
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Activating servers...'
+  });
 
   try {
     switch (strategy) {
       case 'all':
         await enableAllProjectServers();
-        spinner.succeed('Enabled all project MCP servers');
+        progressBar.succeed('Enabled all project MCP servers');
         break;
 
       case 'specific':
         await enableSpecificServers(serverIds);
-        spinner.succeed(`Enabled ${serverIds.length} specific server(s)`);
+        progressBar.succeed(`Enabled ${serverIds.length} specific server(s)`);
         break;
 
       case 'permission': {
         const permissions = serverIds.map((id) => `mcp__${id}__*`);
         await addPermissions(permissions);
-        spinner.succeed(`Added wildcard permissions for ${serverIds.length} server(s)`);
+        progressBar.succeed(`Added wildcard permissions for ${serverIds.length} server(s)`);
         break;
       }
     }
   } catch (error) {
-    spinner.fail('Failed to activate servers');
+    progressBar.fail('Failed to activate servers');
     throw error;
   }
 }
@@ -166,7 +190,9 @@ export async function activateServers(
  * Deactivate servers
  */
 export async function deactivateServers(serverIds: string[]): Promise<void> {
-  const spinner = ora('Deactivating servers...').start();
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Deactivating servers...'
+  });
 
   try {
     // Disable in enabledMcpjsonServers
@@ -188,9 +214,9 @@ export async function deactivateServers(serverIds: string[]): Promise<void> {
       await removePermissions(permissions);
     }
 
-    spinner.succeed(`Deactivated ${serverIds.length} server(s)`);
+    progressBar.succeed(`Deactivated ${serverIds.length} server(s)`);
   } catch (error) {
-    spinner.fail('Failed to deactivate servers');
+    progressBar.fail('Failed to deactivate servers');
     throw error;
   }
 }

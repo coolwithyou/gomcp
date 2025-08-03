@@ -1,6 +1,9 @@
 import inquirer, { Answers } from 'inquirer';
 import chalk from 'chalk';
-import ora from 'ora';
+import {
+  createIndeterminateProgressBar,
+  createTimeBasedProgressBar
+} from './utils/progress.js';
 import { servers } from './servers.js';
 import {
   installServers,
@@ -129,13 +132,16 @@ async function getInstalledServersByScope(): Promise<{ user: Set<string>; projec
     return installedServersCache.data;
   }
 
-  const spinner = ora('Checking installed MCP servers...').start();
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Loading server list...'
+  });
 
   const userServers = new Set<string>();
   const projectServers = new Set<string>();
 
   // Get project servers using our mcp-config module
   try {
+    progressBar.updateLabel('Checking project configuration...');
     const projectServerIds = await getProjectServers();
     projectServerIds.forEach((id) => projectServers.add(id));
   } catch (error) {
@@ -144,30 +150,36 @@ async function getInstalledServersByScope(): Promise<{ user: Set<string>; projec
 
   // Then get all servers from claude mcp list
   try {
-    spinner.text = 'Connecting to MCP servers (this may take a moment)...';
+    progressBar.updateLabel('Connecting to Claude MCP...');
     const { execa } = await import('execa');
     const { stdout } = await execa('claude', ['mcp', 'list']);
 
-    if (stdout && stdout.includes(':')) {
-      // Parse the output to extract server IDs
-      const lines = stdout.split('\n');
-
-      for (const line of lines) {
-        // Parse server lines like "github: npx -y @modelcontextprotocol/server-github - ✓ Connected"
-        const match = line.match(/^(\S+):\s+(.+?)\s+-\s+(✓|✗)/);
-        if (match) {
-          const serverId = match[1];
-          // If it's not in project servers, it must be a user-level server
-          if (!projectServers.has(serverId)) {
-            userServers.add(serverId);
+    progressBar.updateLabel('Parsing installed servers...');
+    // Parse the output to get installed servers
+    const lines = stdout.split('\n');
+    for (const line of lines) {
+      // Skip header and empty lines
+      if (line.includes('Checking MCP server health') || line.trim() === '') {
+        continue;
+      }
+      
+      // Parse server lines like "github: npx -y @modelcontextprotocol/server-github - ✓ Connected"
+      const match = line.match(/^(\S+):\s+(.+?)\s+-\s+(✓|✗)/);
+      if (match) {
+        const serverId = match[1];
+        const matchingServer = servers.find((s) => s.id === serverId);
+        if (matchingServer) {
+          // Only add to userServers if it's not already in projectServers
+          if (!projectServers.has(matchingServer.id)) {
+            userServers.add(matchingServer.id);
           }
         }
       }
     }
 
-    spinner.succeed('Found installed servers');
+    progressBar.succeed('Server list loaded successfully');
   } catch (error) {
-    spinner.warn('Could not connect to Claude MCP (using local config only)');
+    progressBar.fail('Could not connect to Claude MCP (using local config only)');
     // If claude mcp list fails, servers remain empty
   }
 
@@ -255,14 +267,8 @@ async function installFlow(defaultScope: InstallScope = 'user') {
           checked: server.recommended && !isInstalledInOtherScope,
         });
 
-        // Add detailed description if available
-        if (server.detailedDescription && server.detailedDescription.length > 0) {
-          server.detailedDescription.forEach((line) => {
-            choices.push(new inquirer.Separator(chalk.gray(`   ${line}`)));
-          });
-          // Add spacing separator after description
-          choices.push(new inquirer.Separator(' '));
-        }
+        // Add single-line description
+        choices.push(new inquirer.Separator(chalk.gray(`   ${server.description}`)));
       }
     }
   }
@@ -556,8 +562,10 @@ async function restoreFlow() {
 }
 
 async function removeFlow(_defaultScope: InstallScope = 'user') {
-  // Show loading spinner while fetching installed servers
-  const spinner = ora('Loading installed MCP servers...').start();
+  // Show loading progress bar while fetching installed servers
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Loading installed MCP servers...'
+  });
 
   // First get list of installed servers
   const installedServers: { id: string; name: string; scope: 'user' | 'project' }[] = [];
@@ -625,8 +633,8 @@ async function removeFlow(_defaultScope: InstallScope = 'user') {
     }
   }
 
-  // Stop spinner before showing results
-  spinner.stop();
+  // Stop progress bar before showing results
+  progressBar.succeed('Installed servers loaded');
 
   if (installedServers.length === 0) {
     console.log(chalk.yellow('\nNo MCP servers installed.'));
