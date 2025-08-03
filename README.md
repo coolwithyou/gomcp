@@ -27,15 +27,29 @@
 		- [Requirements](#requirements)
 	- [Usage](#usage)
 		- [Interactive Mode](#interactive-mode)
+		- [Backup and Restore](#backup-and-restore)
 		- [Command Line Options](#command-line-options)
 		- [Installation Scopes](#installation-scopes)
 			- [User (Global)](#user-global)
 			- [Project](#project)
+		- [Project-only vs User-level MCP Servers](#project-only-vs-user-level-mcp-servers)
+			- [🔒 Project-only Servers](#-project-only-servers)
+			- [📁 Project-preferred Servers](#-project-preferred-servers)
+			- [👤 User-preferred Servers](#-user-preferred-servers)
 	- [Available MCP Servers](#available-mcp-servers)
 		- [Essential](#essential)
 		- [Development](#development)
 		- [Productivity](#productivity)
 		- [Data \& Analytics](#data--analytics)
+		- [Search \& Web](#search--web)
+		- [Automation \& Integration](#automation--integration)
+		- [AI \& ML](#ai--ml)
+		- [DevOps \& Infrastructure](#devops--infrastructure)
+		- [Domain \& Security](#domain--security)
+		- [Blockchain \& Crypto](#blockchain--crypto)
+		- [Job \& Career](#job--career)
+		- [Time \& Utilities](#time--utilities)
+		- [Meta Tools](#meta-tools)
 		- [And many more...](#and-many-more)
 	- [Presets](#presets)
 	- [Configuration](#configuration)
@@ -48,6 +62,10 @@
 		- [Architecture](#architecture)
 	- [Testing](#testing)
 		- [Test Structure](#test-structure)
+	- [Team Collaboration](#team-collaboration)
+		- [Setting Up Project Servers](#setting-up-project-servers)
+		- [For Team Members](#for-team-members)
+		- [Best Practices](#best-practices)
 	- [Contributing](#contributing)
 		- [Quick Start for Contributors](#quick-start-for-contributors)
 		- [Development Guidelines](#development-guidelines)
@@ -217,17 +235,17 @@ When installing a server at a non-recommended scope, gomcp will warn you about p
 ## Available MCP Servers
 
 ### Essential
+- 🧠 **Sequential Thinking** - Break down complex tasks into logical steps
+- 🛠️ **Serena** - Powerful coding agent toolkit with semantic retrieval and editing
+- 📚 **Context7** - Access up-to-date documentation and code examples for libraries
 - 🐙 **GitHub** - Connect to GitHub API for issues, PRs, and CI/CD
 - 📁 **File System** - Read and write files on your machine
-- 📚 **Context7** - Access up-to-date documentation and code examples for libraries
-- 🧠 **Sequential Thinking** - Break down complex tasks into logical steps
 
 ### Development
 - 🐘 **PostgreSQL** - Query PostgreSQL databases with natural language
 - 🌐 **Puppeteer** - Automate web browser interactions and testing
 - 🎭 **Playwright** - Cross-browser automation with accessibility tree
 - 🐳 **Docker** - Manage containers, images, and Docker workflows
-- 🛠️ **Serena** - Powerful coding agent toolkit with semantic retrieval and editing
 - 🔧 **Browser Tools** - Monitor browser logs and automate browser tasks
 - 🌐 **Chrome** - Control Chrome browser with 20+ tools for automation
 - 🎨 **Figma** - Design-to-code workflow integration
