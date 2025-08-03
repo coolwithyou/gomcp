@@ -210,5 +210,13 @@
     "noteUserConfigOnly": "注意：此备份仅包含用户级别配置",
     "backupNoUserConfig": "此备份文件不包含用户配置。",
     "backupNoProjectConfig": "此备份文件不包含项目配置。"
+  },
+  "version": {
+    "updateAvailable": "新版本可用！(v{version})",
+    "updateInstructions": "更新方法：",
+    "updateCommand": "npm update -g gomcp",
+    "npxNote": "或者如果使用 npx，它将自动使用最新版本。",
+    "checkingUpdates": "正在检查更新...",
+    "failedToCheck": "检查更新失败"
   }
 }

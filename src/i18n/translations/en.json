@@ -210,5 +210,13 @@
     "noteUserConfigOnly": "Note: This backup only contains user-level configuration",
     "backupNoUserConfig": "This backup file does not contain user configuration.",
     "backupNoProjectConfig": "This backup file does not contain project configuration."
+  },
+  "version": {
+    "updateAvailable": "New version available! (v{version})",
+    "updateInstructions": "How to update:",
+    "updateCommand": "npm update -g gomcp",
+    "npxNote": "Or if using npx, it will automatically use the latest version.",
+    "checkingUpdates": "Checking for updates...",
+    "failedToCheck": "Failed to check for updates"
   }
 }

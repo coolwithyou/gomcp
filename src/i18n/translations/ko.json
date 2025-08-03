@@ -210,5 +210,13 @@
     "noteUserConfigOnly": "참고: 이 백업은 사용자 레벨 구성만 포함합니다",
     "backupNoUserConfig": "이 백업 파일에는 사용자 구성이 포함되어 있지 않습니다.",
     "backupNoProjectConfig": "이 백업 파일에는 프로젝트 구성이 포함되어 있지 않습니다."
+  },
+  "version": {
+    "updateAvailable": "새 버전이 사용 가능합니다! (v{version})",
+    "updateInstructions": "업데이트 방법:",
+    "updateCommand": "npm update -g gomcp",
+    "npxNote": "또는 npx를 사용하는 경우 자동으로 최신 버전이 실행됩니다.",
+    "checkingUpdates": "업데이트 확인 중...",
+    "failedToCheck": "업데이트 확인 실패"
   }
 }

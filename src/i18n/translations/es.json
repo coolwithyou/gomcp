@@ -210,5 +210,13 @@
     "noteUserConfigOnly": "Nota: este respaldo solo contiene configuración a nivel de usuario",
     "backupNoUserConfig": "Este archivo de respaldo no contiene configuración de usuario.",
     "backupNoProjectConfig": "Este archivo de respaldo no contiene configuración de proyecto."
+  },
+  "version": {
+    "updateAvailable": "¡Nueva versión disponible! (v{version})",
+    "updateInstructions": "Cómo actualizar:",
+    "updateCommand": "npm update -g gomcp",
+    "npxNote": "O si usas npx, utilizará automáticamente la última versión.",
+    "checkingUpdates": "Verificando actualizaciones...",
+    "failedToCheck": "Error al verificar actualizaciones"
   }
 }

@@ -9,6 +9,7 @@ export interface GomcpConfig {
   presets: Record<string, string[]>;
   lastUpdated: string;
   language?: 'en' | 'ko' | 'zh' | 'es' | 'ja';
+  lastUpdateCheck?: string;
 }
 
 export interface InstalledServer {

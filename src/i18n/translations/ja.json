@@ -210,5 +210,13 @@
     "noteUserConfigOnly": "注意：このバックアップにはユーザーレベルの設定のみが含まれています",
     "backupNoUserConfig": "このバックアップファイルにはユーザー設定が含まれていません。",
     "backupNoProjectConfig": "このバックアップファイルにはプロジェクト設定が含まれていません。"
+  },
+  "version": {
+    "updateAvailable": "新しいバージョンが利用可能です！(v{version})",
+    "updateInstructions": "更新方法：",
+    "updateCommand": "npm update -g gomcp",
+    "npxNote": "またはnpxを使用している場合は、自動的に最新バージョンが使用されます。",
+    "checkingUpdates": "更新を確認中...",
+    "failedToCheck": "更新の確認に失敗しました"
   }
 }

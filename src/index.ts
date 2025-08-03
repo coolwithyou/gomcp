@@ -17,6 +17,8 @@ import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 import { i18n, t } from './i18n/index.js';
 import { getLanguagePreference } from './config.js';
+import { checkForUpdates, getUpdateCommand } from './utils/version-check.js';
+import { displayUpdateNotification } from './utils/update-notification.js';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -41,7 +43,18 @@ async function main(): Promise<void> {
   ╚██████╔╝╚██████╔╝██╗    ██║ ╚═╝ ██║╚██████╗██║     
    ╚═════╝  ╚═════╝ ╚═╝    ╚═╝     ╚═╝ ╚═════╝╚═╝     
   `));
-  console.log(chalk.cyan.bold('  🚀 Interactive MCP Setup for Claude Code\n'));
+  console.log(chalk.cyan.bold('  🚀 Interactive MCP Setup for Claude Code'));
+  console.log(chalk.gray(`  v${version}\n`));
+
+  // Check for updates asynchronously
+  checkForUpdates(version).then((updateInfo) => {
+    if (updateInfo?.isUpdateAvailable) {
+      const updateCommand = getUpdateCommand();
+      displayUpdateNotification(updateInfo.latestVersion, updateCommand);
+    }
+  }).catch(() => {
+    // Silently ignore errors
+  });
 
   program
     .name('gomcp')
