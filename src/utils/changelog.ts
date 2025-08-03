@@ -105,7 +105,7 @@ function parseCommit(hash: string, subject: string, body?: string): CommitInfo |
   if (!hash || !subject) {
     return null;
   }
-  
+
   // Skip release commits
   if (subject.toLowerCase().includes('release') || subject.toLowerCase().includes('version')) {
     return null;
