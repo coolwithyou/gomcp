@@ -22,6 +22,13 @@ describe('Servers', () => {
           'automation',
           'social',
           'search',
+          'ai',
+          'devops',
+          'security',
+          'blockchain',
+          'jobs',
+          'utilities',
+          'meta',
         ]).toContain(server.category);
 
         // 설정이 필요한 서버는 configOptions가 있어야 함
