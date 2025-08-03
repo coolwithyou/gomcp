@@ -51,6 +51,7 @@ async function main(): Promise<void> {
     .option('-a, --activation', 'Show MCP server activation status')
     .option('-s, --scope <scope>', 'Installation scope: user (global) or project', 'user')
     .option('-f, --force', 'Force installation even if scope is not recommended')
+    .option('-d, --show-descriptions', 'Show server descriptions in lists')
     .action(async (options: {
       list?: boolean;
       installed?: boolean | string;
@@ -60,10 +61,11 @@ async function main(): Promise<void> {
       preset?: string;
       scope: string;
       force?: boolean;
+      showDescriptions?: boolean;
     }) => {
       try {
         if (options.list) {
-          listServers();
+          listServers(options.showDescriptions);
           return;
         }
 
@@ -86,7 +88,7 @@ async function main(): Promise<void> {
 
         if (options.remove) {
           // Interactive removal
-          await mainMenu(options.scope as InstallScope, 'remove');
+          await mainMenu(options.scope as InstallScope, 'remove', options.showDescriptions);
           return;
         }
 
@@ -125,7 +127,7 @@ async function main(): Promise<void> {
             'Tip: Select "← Back" or press Enter without selecting to go back to previous menu\n'
           )
         );
-        await mainMenu(options.scope as InstallScope);
+        await mainMenu(options.scope as InstallScope, undefined, options.showDescriptions);
       } catch (error) {
         console.error(chalk.red('Error:'), error);
         process.exit(1);
@@ -158,7 +160,7 @@ async function main(): Promise<void> {
   program.parse();
 }
 
-function listServers() {
+function listServers(showDescriptions?: boolean) {
   console.log(chalk.bold('Available MCP Servers:\n'));
 
   const categories = [...new Set(servers.map((s) => s.category))];
@@ -171,7 +173,11 @@ function listServers() {
     for (const server of categoryServers) {
       const icon = server.recommended ? '⭐' : '  ';
       const config = server.requiresConfig ? chalk.gray(' (requires config)') : '';
-      console.log(`${icon} ${chalk.green(server.name)} - ${server.description}${config}`);
+      if (showDescriptions) {
+        console.log(`${icon} ${chalk.green(server.name)} - ${server.description}${config}`);
+      } else {
+        console.log(`${icon} ${chalk.green(server.name)}${config}`);
+      }
     }
   }
 

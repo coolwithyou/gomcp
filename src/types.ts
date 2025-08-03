@@ -10,7 +10,14 @@ export interface MCPServer {
     | 'data'
     | 'automation'
     | 'social'
-    | 'search';
+    | 'search'
+    | 'ai'
+    | 'devops'
+    | 'security'
+    | 'blockchain'
+    | 'jobs'
+    | 'utilities'
+    | 'meta';
   package: string;
   command?: string;
   args?: string[];

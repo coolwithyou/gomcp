@@ -1,6 +1,9 @@
 import { execa } from 'execa';
 import chalk from 'chalk';
-import ora from 'ora';
+import {
+  createIndeterminateProgressBar,
+  IndeterminateProgressBar
+} from './utils/progress.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as os from 'os';
@@ -55,16 +58,18 @@ export async function installServers(
       continue;
     }
 
-    const spinner = ora(`Installing ${server.name}...`).start();
+    const progressBar = createIndeterminateProgressBar({
+      label: `Installing ${server.name}...`
+    });
 
     try {
       const config = configs.get(serverId);
-      await installServer(server, config, scope);
+      await installServer(server, config, scope, progressBar);
 
-      spinner.succeed(chalk.green(`${server.name} installed successfully`));
+      progressBar.succeed(chalk.green(`${server.name} installed successfully`));
       results.push({ server, success: true });
     } catch (error) {
-      spinner.fail(chalk.red(`${server.name} installation failed`));
+      progressBar.fail(chalk.red(`${server.name} installation failed`));
       console.error(chalk.gray(`  Error: ${error}`));
       if (error instanceof Error && error.stack) {
         console.error(chalk.gray(`  Stack: ${error.stack}`));
@@ -132,7 +137,8 @@ function getWarningMessage(server: MCPServer, scope: InstallScope): string {
 async function installServerViaClaude(
   server: MCPServer,
   config?: ServerConfig,
-  scope: InstallScope = 'user'
+  scope: InstallScope = 'user',
+  progressBar?: IndeterminateProgressBar
 ): Promise<void> {
   const args = ['mcp', 'add', server.id];
 
@@ -189,14 +195,55 @@ async function installServerViaClaude(
     }
   }
 
-  // Execute the claude mcp add command
-  await execa('claude', args, { env });
+  // Execute the claude mcp add command with real-time output
+  if (progressBar) {
+    progressBar.updateLabel(`Installing ${server.name}: Downloading package...`);
+  }
+
+  const childProcess = execa('claude', args, { env });
+
+  // Capture stdout
+  if (childProcess.stdout) {
+    childProcess.stdout.on('data', (data: Buffer) => {
+      const text = data.toString().trim();
+      if (text && progressBar) {
+        // Extract meaningful status from output
+        if (text.includes('Downloading')) {
+          progressBar.updateLabel(`Installing ${server.name}: Downloading...`);
+        } else if (text.includes('Installing')) {
+          progressBar.updateLabel(`Installing ${server.name}: Installing dependencies...`);
+        } else if (text.includes('Building')) {
+          progressBar.updateLabel(`Installing ${server.name}: Building...`);
+        } else if (text.includes('Configuring')) {
+          progressBar.updateLabel(`Installing ${server.name}: Configuring...`);
+        } else if (text.includes('Complete') || text.includes('Success')) {
+          progressBar.updateLabel(`Installing ${server.name}: Finalizing...`);
+        }
+      }
+    });
+  }
+
+  // Capture stderr for additional status
+  if (childProcess.stderr) {
+    childProcess.stderr.on('data', (data: Buffer) => {
+      const text = data.toString().trim();
+      if (text && progressBar && !text.toLowerCase().includes('error')) {
+        // Sometimes status messages come through stderr
+        if (text.includes('npm')) {
+          progressBar.updateLabel(`Installing ${server.name}: Setting up npm packages...`);
+        }
+      }
+    });
+  }
+
+  await childProcess;
 }
 
 async function installServer(
   server: MCPServer,
   config?: ServerConfig,
-  scope: InstallScope = 'user'
+  scope: InstallScope = 'user',
+  progressBar?: IndeterminateProgressBar
 ): Promise<void> {
   // Handle project scope - write to .mcp.json AND use claude mcp add
   if (scope === 'project') {
@@ -206,7 +253,7 @@ async function installServer(
     // 2. Also use claude mcp add for immediate activation
     // This ensures the server is available without restarting Claude Code
     try {
-      await installServerViaClaude(server, config, 'project');
+      await installServerViaClaude(server, config, 'project', progressBar);
     } catch (error) {
       // If already installed, that's fine - we still want the .mcp.json
       console.log(chalk.gray('Note: Server may already be active in Claude Code'));
@@ -216,7 +263,7 @@ async function installServer(
   }
 
   // For user/local scope, use claude mcp add
-  await installServerViaClaude(server, config, scope);
+  await installServerViaClaude(server, config, scope, progressBar);
 }
 
 export async function installPreset(
@@ -271,17 +318,19 @@ export async function installPreset(
 }
 
 export async function verifyInstallations(): Promise<void> {
-  const spinner = ora('Checking MCP server status...').start();
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Checking MCP server status...'
+  });
 
   try {
     // Run claude /mcp command to get status
     const { stdout } = await execa('claude', ['/mcp']);
 
-    spinner.stop();
+    progressBar.stop();
     console.log(chalk.bold('\n📊 MCP Server Status:\n'));
     console.log(stdout);
   } catch (error) {
-    spinner.fail('Failed to check MCP server status');
+    progressBar.fail('Failed to check MCP server status');
     console.error(chalk.red('Error:'), error);
     console.log(chalk.gray('\nMake sure Claude Code is installed and accessible.'));
   }
@@ -290,7 +339,9 @@ export async function verifyInstallations(): Promise<void> {
 export async function listInstalledServers(scope: InstallScope | 'all' = 'user'): Promise<void> {
   console.log(chalk.bold('\n📋 Installed MCP Servers\n'));
 
-  const spinner = ora('Loading installed servers...').start();
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Loading installed servers...'
+  });
 
   try {
     let hasServers = false;
@@ -301,7 +352,7 @@ export async function listInstalledServers(scope: InstallScope | 'all' = 'user')
 
       if (stdout && stdout.includes(':')) {
         hasServers = true;
-        spinner.stop();
+        progressBar.stop();
 
         // Parse the output
         const lines = stdout.split('\n');
@@ -382,7 +433,7 @@ export async function listInstalledServers(scope: InstallScope | 'all' = 'user')
 
           if (mcpConfig.mcpServers && Object.keys(mcpConfig.mcpServers).length > 0) {
             hasServers = true;
-            spinner.stop();
+            progressBar.stop();
 
             console.log(chalk.cyan(`Project Level (${path.join(process.cwd(), '.mcp.json')}):`));
             console.log('');
@@ -414,13 +465,13 @@ export async function listInstalledServers(scope: InstallScope | 'all' = 'user')
     }
 
     if (!hasServers) {
-      spinner.fail('No MCP servers installed');
+      progressBar.fail('No MCP servers installed');
       console.log(chalk.yellow('Install some servers first with gomcp'));
-    } else if (spinner.isSpinning) {
-      spinner.stop();
+    } else {
+      progressBar.stop();
     }
   } catch (error) {
-    spinner.fail('Failed to list installed servers');
+    progressBar.fail('Failed to list installed servers');
     console.error(chalk.red('Error:'), error);
   }
 }
@@ -534,23 +585,25 @@ async function checkForUpdates(
 export async function updateServers(): Promise<void> {
   console.log(chalk.cyan('\n🔄 Checking for server updates...\n'));
 
-  const spinner = ora('Getting installed servers...').start();
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Getting installed servers...'
+  });
 
   try {
     // Get installed servers
     const installedServers = await getInstalledServers();
 
     if (installedServers.length === 0) {
-      spinner.fail('No MCP servers installed');
+      progressBar.fail('No MCP servers installed');
       return;
     }
 
-    spinner.text = 'Checking for updates...';
+    progressBar.updateLabel('Checking for updates...');
 
     // Check for updates
     const updateInfo = await checkForUpdates(installedServers);
 
-    spinner.stop();
+    progressBar.stop();
 
     // Show servers that need updates
     const serversNeedingUpdate = Array.from(updateInfo.entries())
@@ -613,29 +666,33 @@ export async function updateServers(): Promise<void> {
         continue;
       }
 
-      const updateSpinner = ora(`Updating ${server.name}...`).start();
+      const updateProgressBar = createIndeterminateProgressBar({
+        label: `Updating ${server.name}...`
+      });
 
       try {
         // Reinstall the server (preserving config)
         const config = (installed.config || {}) as ServerConfig;
         await installServer(server, config, 'user');
 
-        updateSpinner.succeed(chalk.green(`${server.name} updated successfully`));
+        updateProgressBar.succeed(chalk.green(`${server.name} updated successfully`));
       } catch (error) {
-        updateSpinner.fail(chalk.red(`${server.name} update failed`));
+        updateProgressBar.fail(chalk.red(`${server.name} update failed`));
         console.error(chalk.gray(`  Error: ${error}`));
       }
     }
 
     console.log(chalk.green('\n✅ Update complete!'));
   } catch (error) {
-    spinner.fail('Failed to check for updates');
+    progressBar.fail('Failed to check for updates');
     console.error(chalk.red('Error:'), error);
   }
 }
 
 export async function backupConfig(): Promise<void> {
-  const spinner = ora('Creating backup...').start();
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Creating backup...'
+  });
 
   try {
     const backupData: Record<string, unknown> = {
@@ -650,7 +707,7 @@ export async function backupConfig(): Promise<void> {
       await fs.access(userConfigPath);
       const userConfig = await fs.readFile(userConfigPath, 'utf-8');
       (backupData.configs as Record<string, unknown>).user = JSON.parse(userConfig);
-      spinner.text = 'Backing up user-level configuration...';
+      progressBar.updateLabel('Backing up user-level configuration...');
     } catch {
       // No user config
     }
@@ -662,14 +719,14 @@ export async function backupConfig(): Promise<void> {
       const projectConfig = await fs.readFile(projectConfigPath, 'utf-8');
       (backupData.configs as Record<string, unknown>).project = JSON.parse(projectConfig);
       backupData.projectPath = process.cwd();
-      spinner.text = 'Backing up project-level configuration...';
+      progressBar.updateLabel('Backing up project-level configuration...');
     } catch {
       // No project config
     }
 
     // Check if we have anything to backup
     if (Object.keys(backupData.configs as Record<string, unknown>).length === 0) {
-      spinner.fail('No MCP configurations found to backup');
+      progressBar.fail('No MCP configurations found to backup');
       console.log(chalk.yellow('No user or project MCP configurations exist yet.'));
       console.log(chalk.gray('Install some MCP servers first, then try backing up.'));
       return;
@@ -681,7 +738,7 @@ export async function backupConfig(): Promise<void> {
 
     await fs.writeFile(backupPath, JSON.stringify(backupData, null, 2));
 
-    spinner.succeed(`Backup saved to ${chalk.green(backupPath)}`);
+    progressBar.succeed(`Backup saved to ${chalk.green(backupPath)}`);
 
     // Show what was backed up
     const backedUp = [];
@@ -694,13 +751,15 @@ export async function backupConfig(): Promise<void> {
     }
     console.log(chalk.gray(`Backed up: ${backedUp.join(', ')}`));
   } catch (error) {
-    spinner.fail('Failed to create backup');
+    progressBar.fail('Failed to create backup');
     console.error(chalk.red('Error:'), error);
   }
 }
 
 export async function backupUserConfig(): Promise<void> {
-  const spinner = ora('Creating user configuration backup...').start();
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Creating user configuration backup...'
+  });
 
   try {
     const backupData: Record<string, unknown> = {
@@ -717,7 +776,7 @@ export async function backupUserConfig(): Promise<void> {
       const userConfig = await fs.readFile(userConfigPath, 'utf-8');
       (backupData.configs as Record<string, unknown>).user = JSON.parse(userConfig);
     } catch {
-      spinner.fail('No user-level MCP configuration found');
+      progressBar.fail('No user-level MCP configuration found');
       console.log(chalk.yellow('No user configuration exists yet.'));
       console.log(chalk.gray('Install some MCP servers at user level first, then try backing up.'));
       return;
@@ -729,15 +788,17 @@ export async function backupUserConfig(): Promise<void> {
 
     await fs.writeFile(backupPath, JSON.stringify(backupData, null, 2));
 
-    spinner.succeed(`User configuration backup saved to ${chalk.green(backupPath)}`);
+    progressBar.succeed(`User configuration backup saved to ${chalk.green(backupPath)}`);
   } catch (error) {
-    spinner.fail('Failed to create user configuration backup');
+    progressBar.fail('Failed to create user configuration backup');
     console.error(chalk.red('Error:'), error);
   }
 }
 
 export async function backupProjectConfig(): Promise<void> {
-  const spinner = ora('Creating project configuration backup...').start();
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Creating project configuration backup...'
+  });
 
   try {
     const backupData: Record<string, unknown> = {
@@ -755,7 +816,7 @@ export async function backupProjectConfig(): Promise<void> {
       const projectConfig = await fs.readFile(projectConfigPath, 'utf-8');
       (backupData.configs as Record<string, unknown>).project = JSON.parse(projectConfig);
     } catch {
-      spinner.fail('No project-level MCP configuration found');
+      progressBar.fail('No project-level MCP configuration found');
       console.log(chalk.yellow('No project configuration exists in this directory.'));
       console.log(
         chalk.gray('Install some MCP servers at project level first, then try backing up.')
@@ -769,23 +830,25 @@ export async function backupProjectConfig(): Promise<void> {
 
     await fs.writeFile(backupPath, JSON.stringify(backupData, null, 2));
 
-    spinner.succeed(`Project configuration backup saved to ${chalk.green(backupPath)}`);
+    progressBar.succeed(`Project configuration backup saved to ${chalk.green(backupPath)}`);
     console.log(chalk.gray(`Project: ${path.basename(process.cwd())}`));
   } catch (error) {
-    spinner.fail('Failed to create project configuration backup');
+    progressBar.fail('Failed to create project configuration backup');
     console.error(chalk.red('Error:'), error);
   }
 }
 
 export async function restoreConfig(backupPath: string): Promise<void> {
-  const spinner = ora('Restoring from backup...').start();
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Restoring from backup...'
+  });
 
   try {
     // Check if backup file exists
     try {
       await fs.access(backupPath);
     } catch {
-      spinner.fail('Backup file not found');
+      progressBar.fail('Backup file not found');
       console.log(chalk.yellow(`Cannot find backup file: ${backupPath}`));
       return;
     }
@@ -798,7 +861,7 @@ export async function restoreConfig(backupPath: string): Promise<void> {
     try {
       backupData = JSON.parse(backupDataStr);
     } catch {
-      spinner.fail('Invalid backup file');
+      progressBar.fail('Invalid backup file');
       console.log(chalk.yellow('The backup file is not valid JSON.'));
       return;
     }
@@ -815,7 +878,7 @@ export async function restoreConfig(backupPath: string): Promise<void> {
       }
     } else if (backupData.version === '2.0' && backupData.configs) {
       // New format with user and project configs
-      spinner.text = 'Restoring configurations...';
+      progressBar.updateLabel('Restoring configurations...');
 
       // Restore user-level config
       const configs = backupData.configs as Record<string, unknown>;
@@ -837,7 +900,7 @@ export async function restoreConfig(backupPath: string): Promise<void> {
         }
 
         await fs.writeFile(userConfigPath, JSON.stringify(configs.user, null, 2));
-        spinner.text = 'Restored user-level configuration';
+        progressBar.updateLabel('Restored user-level configuration');
       }
 
       // Restore project-level config
@@ -855,14 +918,14 @@ export async function restoreConfig(backupPath: string): Promise<void> {
         }
 
         await fs.writeFile(projectConfigPath, JSON.stringify(configs.project, null, 2));
-        spinner.text = 'Restored project-level configuration';
+        progressBar.updateLabel('Restored project-level configuration');
 
         if (backupData.projectPath && backupData.projectPath !== process.cwd()) {
           console.log(chalk.yellow(`Note: Project config was from ${String(backupData.projectPath)}`));
         }
       }
 
-      spinner.succeed('Configurations restored successfully');
+      progressBar.succeed('Configurations restored successfully');
 
       // Show what was restored
       const restored = [];
@@ -891,24 +954,26 @@ export async function restoreConfig(backupPath: string): Promise<void> {
       }
 
       await fs.writeFile(configPath, backupDataStr);
-      spinner.succeed('User-level configuration restored successfully');
+      progressBar.succeed('User-level configuration restored successfully');
       console.log(chalk.gray('Note: This backup only contains user-level configuration'));
     }
   } catch (error) {
-    spinner.fail('Failed to restore from backup');
+    progressBar.fail('Failed to restore from backup');
     console.error(chalk.red('Error:'), error);
   }
 }
 
 export async function restoreUserConfig(backupPath: string): Promise<void> {
-  const spinner = ora('Restoring user configuration from backup...').start();
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Restoring user configuration from backup...'
+  });
 
   try {
     // Check if backup file exists
     try {
       await fs.access(backupPath);
     } catch {
-      spinner.fail('Backup file not found');
+      progressBar.fail('Backup file not found');
       console.log(chalk.yellow(`Cannot find backup file: ${backupPath}`));
       return;
     }
@@ -921,14 +986,14 @@ export async function restoreUserConfig(backupPath: string): Promise<void> {
     try {
       backupData = JSON.parse(backupDataStr);
     } catch {
-      spinner.fail('Invalid backup file');
+      progressBar.fail('Invalid backup file');
       console.log(chalk.yellow('The backup file is not valid JSON.'));
       return;
     }
 
     // Validate backup type
     if (backupData.type && backupData.type !== 'user') {
-      spinner.fail('Invalid backup type');
+      progressBar.fail('Invalid backup type');
       console.log(
         chalk.yellow(
           `This backup file contains ${String(backupData.type)} configuration, not user configuration.`
@@ -941,7 +1006,7 @@ export async function restoreUserConfig(backupPath: string): Promise<void> {
     const configs = backupData.configs as Record<string, unknown> | undefined;
     const userConfig = configs?.user || (backupData.mcpServers ? backupData : null);
     if (!userConfig) {
-      spinner.fail('No user configuration found in backup');
+      progressBar.fail('No user configuration found in backup');
       console.log(chalk.yellow('This backup file does not contain user configuration.'));
       return;
     }
@@ -963,22 +1028,24 @@ export async function restoreUserConfig(backupPath: string): Promise<void> {
     }
 
     await fs.writeFile(userConfigPath, JSON.stringify(userConfig, null, 2));
-    spinner.succeed('User configuration restored successfully');
+    progressBar.succeed('User configuration restored successfully');
   } catch (error) {
-    spinner.fail('Failed to restore user configuration from backup');
+    progressBar.fail('Failed to restore user configuration from backup');
     console.error(chalk.red('Error:'), error);
   }
 }
 
 export async function restoreProjectConfig(backupPath: string): Promise<void> {
-  const spinner = ora('Restoring project configuration from backup...').start();
+  const progressBar = createIndeterminateProgressBar({
+    label: 'Restoring project configuration from backup...'
+  });
 
   try {
     // Check if backup file exists
     try {
       await fs.access(backupPath);
     } catch {
-      spinner.fail('Backup file not found');
+      progressBar.fail('Backup file not found');
       console.log(chalk.yellow(`Cannot find backup file: ${backupPath}`));
       return;
     }
@@ -991,14 +1058,14 @@ export async function restoreProjectConfig(backupPath: string): Promise<void> {
     try {
       backupData = JSON.parse(backupDataStr);
     } catch {
-      spinner.fail('Invalid backup file');
+      progressBar.fail('Invalid backup file');
       console.log(chalk.yellow('The backup file is not valid JSON.'));
       return;
     }
 
     // Validate backup type
     if (backupData.type && backupData.type !== 'project') {
-      spinner.fail('Invalid backup type');
+      progressBar.fail('Invalid backup type');
       console.log(
         chalk.yellow(
           `This backup file contains ${String(backupData.type)} configuration, not project configuration.`
@@ -1010,7 +1077,7 @@ export async function restoreProjectConfig(backupPath: string): Promise<void> {
     // Check for project config in backup
     const configs = backupData.configs as Record<string, unknown> | undefined;
     if (!configs?.project) {
-      spinner.fail('No project configuration found in backup');
+      progressBar.fail('No project configuration found in backup');
       console.log(chalk.yellow('This backup file does not contain project configuration.'));
       return;
     }
@@ -1028,13 +1095,13 @@ export async function restoreProjectConfig(backupPath: string): Promise<void> {
     }
 
     await fs.writeFile(projectConfigPath, JSON.stringify(configs.project, null, 2));
-    spinner.succeed('Project configuration restored successfully');
+    progressBar.succeed('Project configuration restored successfully');
 
     if (backupData.projectPath && backupData.projectPath !== process.cwd()) {
       console.log(chalk.yellow(`Note: Project config was from ${String(backupData.projectPath)}`));
     }
   } catch (error) {
-    spinner.fail('Failed to restore project configuration from backup');
+    progressBar.fail('Failed to restore project configuration from backup');
     console.error(chalk.red('Error:'), error);
   }
 }
@@ -1048,7 +1115,9 @@ export async function removeServers(
   const results: { server: string; success: boolean; error?: string }[] = [];
 
   for (const serverId of serverIds) {
-    const spinner = ora(`Removing ${serverId}...`).start();
+    const progressBar = createIndeterminateProgressBar({
+      label: `Removing ${serverId}...`
+    });
 
     try {
       if (scope === 'project') {
@@ -1066,7 +1135,7 @@ export async function removeServers(
         await execa('claude', args);
       }
 
-      spinner.succeed(chalk.green(`${serverId} removed successfully`));
+      progressBar.succeed(chalk.green(`${serverId} removed successfully`));
       results.push({ server: serverId, success: true });
 
       // Remove from gomcp config
@@ -1075,7 +1144,7 @@ export async function removeServers(
         await removeFromGomcpConfig(serverId);
       }
     } catch (error) {
-      spinner.fail(chalk.red(`${serverId} removal failed`));
+      progressBar.fail(chalk.red(`${serverId} removal failed`));
       console.error(chalk.gray(`  Error: ${error}`));
       results.push({ server: serverId, success: false, error: String(error) });
     }

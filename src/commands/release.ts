@@ -1,7 +1,10 @@
 import chalk from 'chalk';
-import ora from 'ora';
+import {
+  createStepProgressBar
+} from '../utils/progress.js';
 import { execa } from 'execa';
 import { generateChangelog } from '../utils/changelog.js';
+import { readFile, writeFile } from 'fs/promises';
 import {
   getCurrentBranch,
   hasUncommittedChanges,
@@ -19,9 +22,29 @@ interface ReleaseOptions {
 }
 
 export async function runRelease(releaseType: ReleaseType, options: ReleaseOptions = {}) {
-  console.log(chalk.cyan.bold(`\n🚀 Starting ${releaseType} release process...\n`));
+  console.log(chalk.cyan.bold(`
+🚀 Starting ${releaseType} release process...
+`));
+
+  // Define all release steps upfront
+  const steps = [
+    { name: 'Checking prerequisites', weight: 10 },
+    { name: 'Pulling latest changes', weight: 10 },
+    ...(options.skipTests ? [] : [{ name: 'Running tests', weight: 20 }]),
+    ...(options.skipLint ? [] : [{ name: 'Running lint checks', weight: 15 }]),
+    ...(options.skipBuild ? [] : [{ name: 'Building project', weight: 20 }]),
+    { name: 'Updating version', weight: 10 },
+    { name: 'Generating changelog', weight: 10 },
+    { name: 'Creating release commit', weight: 5 },
+    { name: 'Creating version tag', weight: 5 },
+    { name: 'Pushing to remote', weight: 15 }
+  ];
+
+  const progressBar = createStepProgressBar({ steps });
 
   try {
+    // Check prerequisites
+    progressBar.nextStep();
     // Check if on main branch
     const currentBranch = await getCurrentBranch();
     if (currentBranch !== 'main') {
@@ -34,153 +57,139 @@ export async function runRelease(releaseType: ReleaseType, options: ReleaseOptio
     }
 
     // Pull latest changes
-    const pullSpinner = ora('Pulling latest changes from main...').start();
+    progressBar.nextStep();
     try {
       await execa('git', ['pull', 'origin', 'main']);
-      pullSpinner.succeed('Latest changes pulled');
     } catch (error) {
-      pullSpinner.fail('Failed to pull latest changes');
+      progressBar.fail('Failed to pull latest changes');
       throw error;
     }
 
     // Run pre-release checks
     if (!options.skipTests) {
-      const testSpinner = ora('Running tests...').start();
+      progressBar.nextStep();
       try {
         await execa('npm', ['test']);
-        testSpinner.succeed('All tests passed');
       } catch (error) {
-        testSpinner.fail('Tests failed');
+        progressBar.fail('Tests failed');
         throw new Error('Tests must pass before releasing');
       }
     }
 
     if (!options.skipLint) {
-      const lintSpinner = ora('Running lint checks...').start();
+      progressBar.nextStep();
       try {
         await execa('npm', ['run', 'lint']);
-        lintSpinner.succeed('Lint checks passed');
       } catch (error) {
-        lintSpinner.fail('Lint checks failed');
+        progressBar.fail('Lint checks failed');
         throw new Error('Lint checks must pass before releasing');
       }
     }
 
     if (!options.skipBuild) {
-      const buildSpinner = ora('Building project...').start();
+      progressBar.nextStep();
       try {
         await execa('npm', ['run', 'build']);
-        buildSpinner.succeed('Build successful');
       } catch (error) {
-        buildSpinner.fail('Build failed');
+        progressBar.fail('Build failed');
         throw new Error('Build must succeed before releasing');
       }
     }
 
     // Get current version before update
     const { stdout: currentVersion } = await execa('npm', ['pkg', 'get', 'version']);
-    const cleanCurrentVersion = currentVersion.replace(/"/g, '');
+    const _cleanCurrentVersion = currentVersion.replace(/"/g, '');
 
     // Update version
-    const versionSpinner = ora(`Updating version (${releaseType})...`).start();
+    progressBar.nextStep();
     try {
       if (options.dryRun) {
-        versionSpinner.info(`[DRY RUN] Would update version from ${cleanCurrentVersion} using ${releaseType}`);
+        console.log(chalk.gray('[Dry run] Would run: npm version ' + releaseType));
       } else {
         await execa('npm', ['version', releaseType, '--no-git-tag-version']);
-        const { stdout: newVersion } = await execa('npm', ['pkg', 'get', 'version']);
-        const cleanNewVersion = newVersion.replace(/"/g, '');
-        versionSpinner.succeed(`Version updated: ${cleanCurrentVersion} → ${cleanNewVersion}`);
       }
     } catch (error) {
-      versionSpinner.fail('Failed to update version');
+      progressBar.fail('Failed to update version');
       throw error;
     }
 
     // Get the new version
     const { stdout: newVersion } = await execa('npm', ['pkg', 'get', 'version']);
-    const cleanNewVersion = newVersion.replace(/"/g, '');
+    const cleanNewVersion = newVersion?.replace(/"/g, '') || '';
 
     // Generate changelog
-    const changelogSpinner = ora('Generating changelog...').start();
+    progressBar.nextStep();
     try {
       const latestTag = await getLatestTag();
-      const changelogEntry = await generateChangelog(cleanNewVersion, latestTag);
+      const changelog = await generateChangelog(latestTag || 'HEAD');
 
       if (options.dryRun) {
-        changelogSpinner.info('[DRY RUN] Would update CHANGELOG.md with:');
-        console.log(chalk.gray(changelogEntry));
+        console.log(chalk.gray('[Dry run] Generated changelog:'));
+        console.log(chalk.gray(changelog));
       } else {
         // Update CHANGELOG.md
-        const fs = await import('fs/promises');
         const changelogPath = 'CHANGELOG.md';
-
+        let existingChangelog = '';
         try {
-          const existingChangelog = await fs.readFile(changelogPath, 'utf-8');
-          // Insert new entry after the title
-          const updatedChangelog = existingChangelog.replace(
-            /^(# Changelog\n+)/m,
-            `$1${changelogEntry}\n`
-          );
-          await fs.writeFile(changelogPath, updatedChangelog);
-        } catch (error) {
-          // If CHANGELOG.md doesn't exist, create it
-          const newChangelog = `# Changelog\n\n${changelogEntry}`;
-          await fs.writeFile(changelogPath, newChangelog);
+          existingChangelog = await readFile(changelogPath, 'utf-8');
+        } catch {
+          // File doesn't exist, create new
         }
 
-        changelogSpinner.succeed('Changelog updated');
+        const newChangelog = changelog + '\n\n' + existingChangelog;
+        await writeFile(changelogPath, newChangelog);
       }
     } catch (error) {
-      changelogSpinner.fail('Failed to generate changelog');
+      progressBar.fail('Failed to generate changelog');
       throw error;
     }
 
     // Commit changes
-    const commitSpinner = ora('Creating release commit...').start();
+    progressBar.nextStep();
     try {
       if (options.dryRun) {
-        commitSpinner.info('[DRY RUN] Would commit with message: chore(release): ' + cleanNewVersion);
+        console.log(chalk.gray('[DRY RUN] Would commit with message: chore(release): ' + cleanNewVersion));
       } else {
-        await execa('git', ['add', 'package.json', 'package-lock.json', 'CHANGELOG.md']);
+        await execa('git', ['add', '.']);
         await execa('git', ['commit', '-m', `chore(release): ${cleanNewVersion}`]);
-        commitSpinner.succeed('Release commit created');
       }
     } catch (error) {
-      commitSpinner.fail('Failed to create commit');
+      progressBar.fail('Failed to create commit');
       throw error;
     }
 
     // Create tag
-    const tagSpinner = ora('Creating version tag...').start();
+    progressBar.nextStep();
     try {
       if (options.dryRun) {
-        tagSpinner.info(`[DRY RUN] Would create tag: v${cleanNewVersion}`);
+        console.log(chalk.gray(`[DRY RUN] Would create tag: v${cleanNewVersion}`));
       } else {
-        await execa('git', ['tag', '-a', `v${cleanNewVersion}`, '-m', `Release v${cleanNewVersion}`]);
-        tagSpinner.succeed(`Tag created: v${cleanNewVersion}`);
+        await execa('git', ['tag', `v${cleanNewVersion}`]);
       }
     } catch (error) {
-      tagSpinner.fail('Failed to create tag');
+      progressBar.fail('Failed to create tag');
       throw error;
     }
 
     // Push changes and tags
-    const pushSpinner = ora('Pushing changes to remote...').start();
+    progressBar.nextStep();
     try {
       if (options.dryRun) {
-        pushSpinner.info('[DRY RUN] Would push to origin main with tags');
+        console.log(chalk.gray('[DRY RUN] Would push to origin main with tags'));
       } else {
         await pushWithTags();
-        pushSpinner.succeed('Changes pushed to remote');
       }
     } catch (error) {
-      pushSpinner.fail('Failed to push changes');
+      progressBar.fail('Failed to push changes');
       throw error;
     }
 
+    // Mark progress as complete
+    progressBar.succeed(`Release v${cleanNewVersion} completed successfully!`);
+
     // Success message
-    console.log(chalk.green.bold(`\n✅ Release v${cleanNewVersion} completed successfully!`));
+    console.log(chalk.green.bold(`
+✅ Release v${cleanNewVersion} completed successfully!`));
     console.log(chalk.gray('\nGitHub Actions will now:'));
     console.log(chalk.gray('  - Run tests'));
     console.log(chalk.gray('  - Create GitHub release'));
