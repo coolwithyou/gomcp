@@ -8,6 +8,7 @@ export interface GomcpConfig {
   installedServers: InstalledServer[];
   presets: Record<string, string[]>;
   lastUpdated: string;
+  language?: 'en' | 'ko' | 'zh' | 'es' | 'ja';
 }
 
 export interface InstalledServer {
@@ -98,6 +99,23 @@ export async function exportConfig(outputPath: string): Promise<void> {
 
   await fs.writeFile(outputPath, JSON.stringify(config, null, 2));
   console.log(chalk.green(`✓ Configuration exported to ${outputPath}`));
+}
+
+export async function getLanguagePreference(): Promise<'en' | 'ko' | 'zh' | 'es' | 'ja'> {
+  const config = await loadConfig();
+  return config?.language || 'en';
+}
+
+export async function setLanguagePreference(language: 'en' | 'ko' | 'zh' | 'es' | 'ja'): Promise<void> {
+  const config = (await loadConfig()) || {
+    version: '1.0.0',
+    installedServers: [],
+    presets: {},
+    lastUpdated: new Date().toISOString(),
+  };
+
+  config.language = language;
+  await saveConfig(config);
 }
 
 export async function importConfig(inputPath: string): Promise<void> {
