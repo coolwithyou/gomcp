@@ -3,6 +3,8 @@ import chalk from 'chalk';
 import {
   createIndeterminateProgressBar
 } from './utils/progress.js';
+import { i18n, t, Language } from './i18n/index.js';
+import { setLanguagePreference } from './config.js';
 import { servers } from './servers.js';
 import {
   installServers,
@@ -59,18 +61,19 @@ export async function mainMenu(defaultScope: InstallScope = 'user', mode?: strin
       {
         type: 'list',
         name: 'action',
-        message: 'What would you like to do?',
+        message: t('mainMenu.title'),
         choices: [
-          { name: '📦 Install new servers', value: 'install' },
-          { name: '📋 List installed servers', value: 'list' },
-          { name: '🗑️  Remove servers', value: 'remove' },
-          { name: '🔄 Update existing servers', value: 'update' },
-          { name: '✅ Verify installations', value: 'verify' },
-          { name: '🔌 Manage MCP activation', value: 'activation' },
-          { name: '📊 Check activation status', value: 'status' },
-          { name: '💾 Backup current configuration', value: 'backup' },
-          { name: '📂 Restore from backup', value: 'restore' },
-          { name: '❌ Exit', value: 'exit' },
+          { name: t('mainMenu.install'), value: 'install' },
+          { name: t('mainMenu.list'), value: 'list' },
+          { name: t('mainMenu.remove'), value: 'remove' },
+          { name: t('mainMenu.update'), value: 'update' },
+          { name: t('mainMenu.verify'), value: 'verify' },
+          { name: t('mainMenu.activation'), value: 'activation' },
+          { name: t('mainMenu.status'), value: 'status' },
+          { name: t('mainMenu.backup'), value: 'backup' },
+          { name: t('mainMenu.restore'), value: 'restore' },
+          { name: t('mainMenu.language'), value: 'language' },
+          { name: t('mainMenu.exit'), value: 'exit' },
         ],
       },
     ],
@@ -79,7 +82,9 @@ export async function mainMenu(defaultScope: InstallScope = 'user', mode?: strin
 
   if (!result) {
     // This shouldn't happen on main menu, but handle it
-    console.log(chalk.gray('\nGoodbye! 👋\n'));
+    console.log(chalk.gray(`
+${t('messages.goodbye')}
+`));
     process.exit(0);
   }
 
@@ -113,8 +118,13 @@ export async function mainMenu(defaultScope: InstallScope = 'user', mode?: strin
     case 'restore':
       await restoreFlow();
       break;
+    case 'language':
+      await languageSelectionFlow();
+      break;
     case 'exit':
-      console.log(chalk.gray('\nGoodbye! 👋\n'));
+      console.log(chalk.gray(`
+${t('messages.goodbye')}
+`));
       process.exit(0);
   }
 
@@ -988,4 +998,46 @@ async function deactivationFlow(serverStatuses: ServerActivationStatus[]) {
   await deactivateServers(selectionResult.servers);
   console.log(chalk.green('\n✓ Selected servers deactivated!'));
   console.log(chalk.gray('Restart Claude Code for changes to take effect.'));
+}
+
+async function languageSelectionFlow(): Promise<void> {
+  const currentLang = i18n.getCurrentLanguage();
+  const languages = i18n.getAvailableLanguages();
+
+  console.log(chalk.cyan(`
+${t('messages.currentLanguage', { language: languages.find(l => l.code === currentLang)?.name || currentLang })}
+`));
+
+  const choices = languages.map(lang => ({
+    name: lang.name + (lang.code === currentLang ? ' ✓' : ''),
+    value: lang.code,
+  }));
+
+  const result = await promptWithEscape<{ language: Language }>([
+    {
+      type: 'list',
+      name: 'language',
+      message: t('prompts.selectLanguage'),
+      choices,
+    },
+  ]);
+
+  if (!result) {
+    return;
+  }
+
+  const { language } = result;
+
+  if (language === currentLang) {
+    return; // No change needed
+  }
+
+  // Change language
+  i18n.setLanguage(language);
+  await setLanguagePreference(language);
+
+  const newLangName = languages.find(l => l.code === language)?.name || language;
+  console.log(chalk.green(`
+✓ ${t('messages.languageChanged', { language: newLangName })}
+`));
 }
