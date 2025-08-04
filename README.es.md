@@ -12,6 +12,8 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
 
 > 🚀 **¡Go MCP!** - De cero a superpoderes de IA en 30 segundos. Elige tus herramientas, nosotros nos encargamos del resto.
+> 
+> 🌐 **Soporte Multiidioma** - Todo el proceso de configuración de MCP está disponible en español, inglés, coreano, japonés y chino. ¡Cambia el idioma cuando quieras!
 
 ## Tabla de Contenidos
 
@@ -137,6 +139,7 @@ Verás un menú interactivo con opciones para:
 - ✅ Verificar instalaciones
 - 💾 Respaldar/restaurar configuraciones
 - 📋 Listar servidores disponibles
+- 🌐 Cambiar idioma
 
 ### Respaldo y Restauración
 
