@@ -15,7 +15,7 @@ import {
   removePermissions,
 } from './claude-settings.js';
 import { servers } from './servers.js';
-import { t } from './i18n/index.js';
+
 
 export interface ServerActivationStatus {
   id: string;
