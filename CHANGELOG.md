@@ -1,3 +1,27 @@
+## [v0.14.1] - 2025-08-04
+
+### Bug Fixes
+
+- **hotfix**: restore language selection menu and fix immediate language switching
+  - Added missing language selection option back to main menu
+  - Fixed language changes not applying immediately by using t() function
+  - Updated all hardcoded menu texts to use i18n translations
+  - Language changes now reflect immediately without restart
+
+## [v0.14.0] - 2025-08-04
+
+### Features
+
+- Expanded MCP server catalog with detailed metadata
+- Enhanced server installation UX with progress bars
+- Added --show-descriptions flag for detailed server info
+
+### Bug Fixes
+
+- Fixed i18n implementation in installer module
+- Resolved TypeScript and ESLint errors
+- Improved CI workflow configuration
+
 ## [v0.13.0] - 2025-08-04
 
 ### Features
