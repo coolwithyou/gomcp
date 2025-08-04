@@ -27,6 +27,8 @@
     "lint:fix": "eslint src --ext .ts --fix",
     "format": "prettier --write \"src/**/*.ts\"",
     "format:check": "prettier --check \"src/**/*.ts\"",
+    "typecheck": "tsc --noEmit",
+    "pre-pr": "./scripts/pre-pr.sh",
     "preversion": "npm test && npm run lint",
     "version": "npm run build && git add dist/",
     "postversion": "git push && git push --tags",
