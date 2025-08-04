@@ -19,7 +19,7 @@ interface NpmRegistryResponse {
  */
 export async function shouldCheckForUpdates(): Promise<boolean> {
   const config = await loadConfig();
-  
+
   if (!config?.lastUpdateCheck) {
     return true;
   }
@@ -27,7 +27,7 @@ export async function shouldCheckForUpdates(): Promise<boolean> {
   const lastCheck = new Date(config.lastUpdateCheck);
   const now = new Date();
   const hoursSinceLastCheck = (now.getTime() - lastCheck.getTime()) / (1000 * 60 * 60);
-  
+
   return hoursSinceLastCheck >= 24;
 }
 
@@ -122,7 +122,7 @@ export async function checkForUpdates(currentVersion: string): Promise<VersionCh
 
     // Fetch latest version from npm
     const latestVersion = await fetchLatestVersion('gomcp');
-    
+
     // Save check time
     await saveLastCheckTime();
 
@@ -149,7 +149,7 @@ export function getUpdateCommand(): string {
   if (process.env.npm_execpath?.includes('npx')) {
     return 'npx';
   }
-  
+
   // Default to global update
   return 'npm update -g gomcp';
 }

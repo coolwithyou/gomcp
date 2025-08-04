@@ -28,7 +28,7 @@ class I18nManager {
   async initialize(language?: Language): Promise<void> {
     // Load all available translations
     const languages: Language[] = ['en', 'ko', 'zh', 'es', 'ja'];
-    
+
     for (const lang of languages) {
       try {
         const translationPath = path.join(__dirname, 'translations', `${lang}.json`);
@@ -61,14 +61,14 @@ class I18nManager {
 
   getAvailableLanguages(): Array<{ code: Language; name: string }> {
     const languages: Array<{ code: Language; name: string }> = [];
-    
+
     for (const [code, translation] of this.translations.entries()) {
       languages.push({
         code,
         name: translation.language.name,
       });
     }
-    
+
     return languages;
   }
 

@@ -1009,7 +1009,7 @@ async function deactivationFlow(serverStatuses: ServerActivationStatus[]) {
 async function languageSelectionFlow(): Promise<void> {
   const currentLang = i18n.getCurrentLanguage();
   const languages = i18n.getAvailableLanguages();
-  
+
   console.log(chalk.cyan(`\n${t('messages.currentLanguage', { language: languages.find(l => l.code === currentLang)?.name || currentLang })}\n`));
 
   const choices = languages.map(lang => ({
@@ -1031,7 +1031,7 @@ async function languageSelectionFlow(): Promise<void> {
   }
 
   const { language } = result;
-  
+
   if (language === currentLang) {
     return; // No change needed
   }
@@ -1039,7 +1039,7 @@ async function languageSelectionFlow(): Promise<void> {
   // Change language
   i18n.setLanguage(language);
   await setLanguagePreference(language);
-  
+
   const newLangName = languages.find(l => l.code === language)?.name || language;
   console.log(chalk.green(`\n✓ ${t('messages.languageChanged', { language: newLangName })}\n`));
 }
