@@ -82,6 +82,7 @@ class I18nManager {
 
     // Split key by dot to navigate nested structure
     const keys = key.split('.');
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let value: any = translation || fallbackTranslation;
 
     for (const k of keys) {

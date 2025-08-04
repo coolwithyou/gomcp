@@ -329,7 +329,7 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
 
   // Confirm installation
   console.log(chalk.bold(`\n📋 ${t('server.installationSummary')}`));
-  console.log(chalk.gray(`${t('server.scope', { scope: scope === 'user' ? t('choices.userScope').replace(/[🌍📁] /, '') : t('choices.projectScope').replace(/[🌍📁] /, '') })}\n`));
+  console.log(chalk.gray(`${t('server.scope', { scope: scope === 'user' ? t('choices.userScope').replace(/[🌍📁] /u, '') : t('choices.projectScope').replace(/[🌍📁] /u, '') })}\n`));
   for (const serverId of selectedServers) {
     const server = servers.find((s) => s.id === serverId);
     if (!server) continue;

@@ -6,7 +6,6 @@ import {
 } from './utils/progress.js';
 import * as fs from 'fs/promises';
 import * as path from 'path';
-import * as os from 'os';
 import { servers, presets } from './servers.js';
 import { MCPServer, ServerConfig, InstallResult, InstallScope } from './types.js';
 import { addProjectServer, removeProjectServer } from './mcp-config.js';
