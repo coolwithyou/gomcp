@@ -42,7 +42,7 @@ interface ServerCache {
 }
 
 let installedServersCache: ServerCache | null = null;
-const CACHE_TTL = 30000; // 30 seconds cache
+const CACHE_TTL = 10 * 60 * 1000; // 10 minutes cache; // 30 seconds cache
 
 // Clear cache when servers are modified
 function clearInstalledServersCache() {
@@ -55,6 +55,11 @@ export async function mainMenu(defaultScope: InstallScope = 'user', mode?: strin
     await removeFlow(defaultScope);
     return;
   }
+
+  // Start preloading installed servers in the background (non-blocking)
+  getInstalledServersByScope().catch(() => {
+    // Silently ignore errors during preload
+  });
 
   const result = await promptWithEscape<{ action: string }>(
     [
@@ -135,10 +140,23 @@ ${t('messages.goodbye')}
   }
 }
 
-async function getInstalledServersByScope(): Promise<{ user: Set<string>; project: Set<string> }> {
+async function getInstalledServersByScope(forceRefresh = false): Promise<{ user: Set<string>; project: Set<string> }> {
   // Check cache first
-  if (installedServersCache && Date.now() - installedServersCache.timestamp < CACHE_TTL) {
+  if (!forceRefresh && installedServersCache && Date.now() - installedServersCache.timestamp < CACHE_TTL) {
     return installedServersCache.data;
+  }
+
+  // If we have stale cache, return it immediately and update in background
+  if (!forceRefresh && installedServersCache && Date.now() - installedServersCache.timestamp < CACHE_TTL * 2) {
+    // Return stale cache immediately
+    const staleData = installedServersCache.data;
+
+    // Update in background (non-blocking)
+    getInstalledServersByScope(true).catch(() => {
+      // Silently ignore errors in background update
+    });
+
+    return staleData;
   }
 
   const progressBar = createIndeterminateProgressBar({
@@ -159,7 +177,7 @@ async function getInstalledServersByScope(): Promise<{ user: Set<string>; projec
 
   // Then get all servers from claude mcp list
   try {
-    progressBar.updateLabel('Connecting to Claude MCP...');
+    progressBar.updateLabel('Checking MCP server health status (this may take a moment)...');
     const { execa } = await import('execa');
     const { stdout } = await execa('claude', ['mcp', 'list']);
 
