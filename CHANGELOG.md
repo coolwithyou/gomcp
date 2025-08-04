@@ -1,3 +1,10 @@
+## [v0.14.2] - 2025-08-04
+
+### Documentation
+
+- Added gomcp terminal UI screenshot to README
+- Enhanced visual appeal with project branding
+
 ## [v0.14.1] - 2025-08-04
 
 ### Bug Fixes
