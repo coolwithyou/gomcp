@@ -66,7 +66,7 @@ jobs:
       run: npm ci
     
     - name: Type check
-      run: npm run build -- --noEmit
+      run: npm run typecheck
 
   publish-dry-run:
     runs-on: ubuntu-latest
