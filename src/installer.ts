@@ -326,26 +326,26 @@ export async function verifyInstallations(): Promise<void> {
 
   try {
     // Get server status from claude mcp list
-    let serversStatus: Map<string, { command: string; connected: boolean }> = new Map();
-    
+    const serversStatus: Map<string, { command: string; connected: boolean }> = new Map();
+
     try {
       const { stdout } = await execa('claude', ['mcp', 'list']);
-      
+
       if (stdout && stdout.includes(':')) {
         const lines = stdout.split('\n');
-        
+
         for (const line of lines) {
           if (line.includes('Checking MCP server health') || line.trim() === '') {
             continue;
           }
-          
+
           // Parse server lines like "github: npx -y @modelcontextprotocol/server-github - ✓ Connected"
           const match = line.match(/^(\S+):\s+(.+?)\s+-\s+(✓|✗)/);
           if (match) {
             const serverId = match[1];
             const command = match[2];
             const connected = match[3] === '✓';
-            
+
             serversStatus.set(serverId, { command, connected });
           }
         }
@@ -356,36 +356,36 @@ export async function verifyInstallations(): Promise<void> {
       console.log(chalk.gray('Make sure Claude Code is installed and accessible'));
       return;
     }
-    
+
     if (serversStatus.size === 0) {
       progressBar.fail('No MCP servers found');
       console.log(chalk.yellow('\nNo MCP servers are currently configured.'));
       console.log(chalk.gray('Install some servers first with "gomcp"'));
       return;
     }
-    
+
     progressBar.stop();
-    
+
     console.log(chalk.bold('\n📊 MCP Server Status Report\n'));
-    
+
     let allHealthy = true;
     const failedServers: string[] = [];
-    
+
     // Check each server
     for (const [serverId, status] of serversStatus) {
       const serverDef = servers.find(s => s.id === serverId);
       const serverName = serverDef?.name || serverId;
-      
+
       if (status.connected) {
         console.log(`${chalk.green('✓')} ${chalk.bold(serverName)} - Connected`);
-        
+
         // Check if server requires config but might be missing it
         if (serverDef?.requiresConfig) {
           // Check project config for required settings
           try {
             const projectConfigPath = path.join(process.cwd(), '.mcp.json');
             const projectConfig = JSON.parse(await fs.readFile(projectConfigPath, 'utf-8'));
-            
+
             if (projectConfig.mcpServers?.[serverId]) {
               const serverConfig = projectConfig.mcpServers[serverId];
               if (serverConfig.env) {
@@ -403,15 +403,15 @@ export async function verifyInstallations(): Promise<void> {
         console.log(`${chalk.red('✗')} ${chalk.bold(serverName)} - ${chalk.red('Failed to connect')}`);
         failedServers.push(serverName);
         allHealthy = false;
-        
+
         // Provide troubleshooting tips based on server type
         if (serverDef) {
           console.log(chalk.yellow('  └─ Troubleshooting tips:'));
-          
+
           if (serverDef.requiresConfig && serverDef.configOptions) {
             console.log(chalk.gray(`     • Check required configuration: ${serverDef.configOptions.map(opt => opt.key).join(', ')}`));
           }
-          
+
           // Server-specific tips
           switch (serverId) {
             case 'github':
@@ -432,13 +432,13 @@ export async function verifyInstallations(): Promise<void> {
               console.log(chalk.gray('     • Verify Slack app token and permissions'));
               break;
           }
-          
+
           console.log(chalk.gray('     • Try reinstalling with: gomcp'));
           console.log(chalk.gray(`     • Check logs: claude mcp logs ${serverId}`));
         }
       }
     }
-    
+
     // Summary
     console.log(''); // Empty line
     if (allHealthy) {
@@ -446,7 +446,7 @@ export async function verifyInstallations(): Promise<void> {
     } else {
       console.log(chalk.yellow(`⚠️  ${failedServers.length} server(s) failed to connect`));
       console.log(chalk.gray('\nUse the troubleshooting tips above to resolve connection issues.'));
-      
+
       // Try to run claude /mcp for additional diagnostics
       console.log(chalk.gray('\nTrying to get additional diagnostics...'));
       try {
@@ -459,7 +459,7 @@ export async function verifyInstallations(): Promise<void> {
         // Claude /mcp command failed or timed out - that's okay
       }
     }
-    
+
   } catch (error) {
     progressBar.fail('Failed to verify installations');
     console.error(chalk.red('Error:'), error);
@@ -669,14 +669,14 @@ async function getInstalledServers(): Promise<InstalledServer[]> {
         if (match) {
           const serverId = match[1];
           const commandStr = match[2];
-          
+
           // Find the server definition
           const serverDef = servers.find((s) => s.id === serverId);
-          
+
           // Parse command to extract package name and args
           let packageName = serverDef?.package || '';
           let args: string[] = [];
-          
+
           if (commandStr.includes('npx')) {
             const npxMatch = commandStr.match(/npx\s+-y\s+(@?\S+)/);
             if (npxMatch) {
@@ -688,7 +688,7 @@ async function getInstalledServers(): Promise<InstalledServer[]> {
               args = argsMatch[1].split(/\s+/);
             }
           }
-          
+
           installedServers.push({
             id: serverId,
             package: packageName,
@@ -699,12 +699,12 @@ async function getInstalledServers(): Promise<InstalledServer[]> {
         }
       }
     }
-    
+
     // Also check project .mcp.json for project-level servers
     try {
       const projectConfigPath = path.join(process.cwd(), '.mcp.json');
       const projectConfig = JSON.parse(await fs.readFile(projectConfigPath, 'utf-8'));
-      
+
       if (projectConfig.mcpServers) {
         for (const [serverId, serverConfig] of Object.entries(projectConfig.mcpServers)) {
           // Check if already in list
@@ -712,7 +712,7 @@ async function getInstalledServers(): Promise<InstalledServer[]> {
           if (!existing && typeof serverConfig === 'object' && serverConfig !== null) {
             const cfg = serverConfig as Record<string, unknown>;
             const serverDef = servers.find((s) => s.id === serverId);
-            
+
             installedServers.push({
               id: serverId,
               package: serverDef?.package || '',
@@ -733,13 +733,13 @@ async function getInstalledServers(): Promise<InstalledServer[]> {
     try {
       const projectConfigPath = path.join(process.cwd(), '.mcp.json');
       const projectConfig = JSON.parse(await fs.readFile(projectConfigPath, 'utf-8'));
-      
+
       if (projectConfig.mcpServers) {
         for (const [serverId, serverConfig] of Object.entries(projectConfig.mcpServers)) {
           if (typeof serverConfig === 'object' && serverConfig !== null) {
             const cfg = serverConfig as Record<string, unknown>;
             const serverDef = servers.find((s) => s.id === serverId);
-            
+
             installedServers.push({
               id: serverId,
               package: serverDef?.package || '',
@@ -750,7 +750,7 @@ async function getInstalledServers(): Promise<InstalledServer[]> {
           }
         }
       }
-      
+
       return installedServers;
     } catch {
       return [];

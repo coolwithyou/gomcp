@@ -43,8 +43,7 @@ async function main(): Promise<void> {
   ╚██████╔╝╚██████╔╝██╗    ██║ ╚═╝ ██║╚██████╗██║     
    ╚═════╝  ╚═════╝ ╚═╝    ╚═╝     ╚═╝ ╚═════╝╚═╝     
   `));
-  console.log(chalk.cyan.bold('  🚀 Interactive MCP Setup for Claude Code'));
-  console.log(chalk.gray(`  v${version}\n`));
+  console.log(chalk.cyan.bold(`  🚀 Interactive MCP Setup for Claude Code v${version}`));
 
   // Check for updates asynchronously
   checkForUpdates(version).then((updateInfo) => {
