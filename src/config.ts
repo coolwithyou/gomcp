@@ -92,6 +92,12 @@ export async function getCustomPresets(): Promise<Record<string, string[]>> {
   return config?.presets || {};
 }
 
+/**
+ * Exports the current configuration to a specified file path.
+ *
+ * @param outputPath - The file path where the configuration will be saved
+ * @throws If no configuration exists to export
+ */
 export async function exportConfig(outputPath: string): Promise<void> {
   const config = await loadConfig();
   if (!config) {
@@ -102,11 +108,23 @@ export async function exportConfig(outputPath: string): Promise<void> {
   console.log(chalk.green(`✓ Configuration exported to ${outputPath}`));
 }
 
+/**
+ * Retrieves the user's language preference from the configuration.
+ *
+ * @returns The configured language code, or 'en' if not set
+ */
 export async function getLanguagePreference(): Promise<'en' | 'ko' | 'zh' | 'es' | 'ja'> {
   const config = await loadConfig();
   return config?.language || 'en';
 }
 
+/**
+ * Sets the user's language preference in the configuration.
+ *
+ * Updates the configuration with the specified language code, creating a new configuration if one does not exist.
+ *
+ * @param language - The language code to set as the user's preference
+ */
 export async function setLanguagePreference(language: 'en' | 'ko' | 'zh' | 'es' | 'ja'): Promise<void> {
   const config = (await loadConfig()) || {
     version: '1.0.0',
@@ -119,6 +137,12 @@ export async function setLanguagePreference(language: 'en' | 'ko' | 'zh' | 'es' 
   await saveConfig(config);
 }
 
+/**
+ * Imports a configuration file from the specified path and saves it as the current configuration.
+ *
+ * @param inputPath - Path to the configuration JSON file to import
+ * @throws If the file does not contain a valid configuration structure
+ */
 export async function importConfig(inputPath: string): Promise<void> {
   const data = await fs.readFile(inputPath, 'utf-8');
   const config = JSON.parse(data) as GomcpConfig;

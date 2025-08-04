@@ -29,6 +29,11 @@ interface PackageJson {
 const packageJson = JSON.parse(readFileSync(join(__dirname, '..', 'package.json'), 'utf-8')) as PackageJson;
 const version = packageJson.version;
 
+/**
+ * Initializes and runs the gomcp CLI tool for managing MCP servers for Claude Code.
+ *
+ * Sets up internationalization, displays the application title and version, checks for updates, and configures all CLI commands and options. Handles user input to perform actions such as listing, installing, removing, verifying, and managing MCP servers and presets, as well as automating release processes.
+ */
 async function main(): Promise<void> {
   // Initialize i18n
   const savedLanguage = await getLanguagePreference();

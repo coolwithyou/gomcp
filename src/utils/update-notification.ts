@@ -2,7 +2,10 @@ import chalk from 'chalk';
 import { t } from '../i18n/index.js';
 
 /**
- * Display a formatted update notification box
+ * Displays a formatted update notification box in the console with localized messages and update instructions.
+ *
+ * @param latestVersion - The latest available version to display in the notification
+ * @param updateCommand - The command users should run to update, which may trigger additional notes if set to 'npx gomcp'
  */
 export function displayUpdateNotification(latestVersion: string, updateCommand: string): void {
   const lines: string[] = [];

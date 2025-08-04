@@ -15,7 +15,9 @@ interface NpmRegistryResponse {
 }
 
 /**
- * Check if we should perform an update check (once every 24 hours)
+ * Determines whether an update check should be performed based on the last recorded check time.
+ *
+ * Returns `true` if no previous check has been recorded or if at least 24 hours have passed since the last check; otherwise, returns `false`.
  */
 export async function shouldCheckForUpdates(): Promise<boolean> {
   const config = await loadConfig();
@@ -32,7 +34,7 @@ export async function shouldCheckForUpdates(): Promise<boolean> {
 }
 
 /**
- * Save the last update check time
+ * Updates and persists the timestamp of the last update check in the configuration.
  */
 export async function saveLastCheckTime(): Promise<void> {
   const config = await loadConfig() || {
@@ -47,7 +49,10 @@ export async function saveLastCheckTime(): Promise<void> {
 }
 
 /**
- * Fetch the latest version from npm registry
+ * Retrieves the latest published version of a package from the npm registry.
+ *
+ * @param packageName - The name of the npm package to check
+ * @returns A promise that resolves with the latest version string from the npm registry
  */
 function fetchLatestVersion(packageName: string): Promise<string> {
   return new Promise((resolve, reject) => {
@@ -89,7 +94,11 @@ function fetchLatestVersion(packageName: string): Promise<string> {
 }
 
 /**
- * Compare two semantic versions
+ * Determines if the `latest` semantic version is newer than the `current` version.
+ *
+ * @param current - The current version string (e.g., "1.2.3")
+ * @param latest - The version string to compare against (e.g., "1.3.0")
+ * @returns `true` if `latest` is strictly newer than `current`; otherwise, `false`
  */
 function isNewerVersion(current: string, latest: string): boolean {
   const parseVersion = (v: string): number[] => {
@@ -111,7 +120,12 @@ function isNewerVersion(current: string, latest: string): boolean {
 }
 
 /**
- * Check for updates to gomcp
+ * Checks if a newer version of "gomcp" is available on the npm registry.
+ *
+ * If an update check is due, fetches the latest version, compares it to the provided current version, and returns a `VersionCheckResult` with details. Returns `null` if no check is needed or if an error occurs.
+ *
+ * @param currentVersion - The currently installed version of "gomcp"
+ * @returns A `VersionCheckResult` object if an update check is performed, or `null` if not needed or on error
  */
 export async function checkForUpdates(currentVersion: string): Promise<VersionCheckResult | null> {
   try {
@@ -142,7 +156,11 @@ export async function checkForUpdates(currentVersion: string): Promise<VersionCh
 }
 
 /**
- * Get the appropriate update command based on how gomcp was installed
+ * Returns the recommended command to update "gomcp" based on the current execution environment.
+ *
+ * If the package is being run via `npx`, returns `"npx"`. Otherwise, returns the global npm update command.
+ *
+ * @returns The update command string appropriate for the installation method
  */
 export function getUpdateCommand(): string {
   // Check if running through npx

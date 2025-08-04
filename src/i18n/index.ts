@@ -132,7 +132,15 @@ const i18n = new I18nManager();
 export { i18n };
 export type { Translation };
 
-// Export convenience function
+/**
+ * Retrieves a localized string for the specified key, optionally substituting parameters.
+ *
+ * If the key is not found in the current language, falls back to the default language. Returns the key itself if no translation is available.
+ *
+ * @param key - The dot-separated path to the translation string
+ * @param params - Optional parameters to replace placeholders in the translation
+ * @returns The localized string with parameters substituted, or the key if not found
+ */
 export function t(key: string, params?: Record<string, string | number>): string {
   return i18n.t(key, params);
 }

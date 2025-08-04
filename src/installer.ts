@@ -11,6 +11,16 @@ import { MCPServer, ServerConfig, InstallResult, InstallScope } from './types.js
 import { addProjectServer, removeProjectServer } from './mcp-config.js';
 import { t } from './i18n/index.js';
 
+/**
+ * Installs multiple MCP servers by their IDs with specified configurations and scope.
+ *
+ * For each server, validates installation constraints, displays warnings or errors as needed, and attempts installation. Summarizes the results and provides next steps upon completion.
+ *
+ * @param serverIds - List of server IDs to install
+ * @param configs - Map of server IDs to their configuration objects
+ * @param scope - Installation scope ('user' or 'project'); defaults to 'user'
+ * @param force - If true, overrides preferred scope recommendations
+ */
 export async function installServers(
   serverIds: string[],
   configs: Map<string, ServerConfig>,
@@ -318,6 +328,11 @@ export async function installPreset(
   await installServers(serverIds, configs, scope, force);
 }
 
+/**
+ * Checks the connection status of all configured MCP servers and displays a detailed status report.
+ *
+ * For each server, prints whether it is connected or failed to connect, and provides troubleshooting tips for failures. If connected and configuration is required, displays configured environment variables. Summarizes overall health and attempts to provide additional diagnostics if any servers fail.
+ */
 export async function verifyInstallations(): Promise<void> {
   const progressBar = createIndeterminateProgressBar({
     label: 'Checking MCP server status...'
@@ -648,6 +663,13 @@ interface InstalledServer {
   config?: Record<string, unknown>;
 }
 
+/**
+ * Retrieves a list of installed MCP servers by parsing the output of `claude mcp list` and supplementing with project-level servers from `.mcp.json` if available.
+ *
+ * If the `claude mcp list` command fails, falls back to reading only the project configuration file.
+ *
+ * @returns An array of installed server objects, each containing server ID, package name, command, arguments, and optional configuration.
+ */
 async function getInstalledServers(): Promise<InstalledServer[]> {
   const installedServers: InstalledServer[] = [];
 
@@ -758,8 +780,13 @@ async function getInstalledServers(): Promise<InstalledServer[]> {
 }
 
 /**
- * Simple semantic version comparison
- * Returns -1 if v1 < v2, 0 if v1 === v2, 1 if v1 > v2
+ * Compares two semantic version strings.
+ *
+ * Returns -1 if the first version is lower, 1 if higher, or 0 if they are equal.
+ *
+ * @param v1 - The first version string to compare
+ * @param v2 - The second version string to compare
+ * @returns Comparison result: -1 if `v1` < `v2`, 1 if `v1` > `v2`, 0 if equal
  */
 function compareVersions(v1: string, v2: string): number {
   const normalize = (v: string) => v.replace(/[^\d.]/g, '').split('.').map(n => parseInt(n) || 0);
@@ -779,6 +806,14 @@ function compareVersions(v1: string, v2: string): number {
   return 0;
 }
 
+/**
+ * Checks for available updates for the given list of installed MCP servers.
+ *
+ * For each installed server, retrieves the latest version from the npm registry and determines the currently installed version (locally or globally). Compares versions to identify if an update is needed.
+ *
+ * @param installedServers - The list of installed servers to check for updates
+ * @returns A map of server IDs to objects containing the current version, latest version, and whether an update is needed
+ */
 async function checkForUpdates(
   installedServers: InstalledServer[]
 ): Promise<Map<string, { current: string; latest: string; needsUpdate: boolean }>> {
@@ -841,6 +876,11 @@ async function checkForUpdates(
   return updateInfo;
 }
 
+/**
+ * Checks for available updates to installed MCP servers and allows the user to select and update them interactively.
+ *
+ * Retrieves the list of installed servers, determines which have newer versions available, and prompts the user to select which servers to update. Performs updates for the selected servers and displays progress and results.
+ */
 export async function updateServers(): Promise<void> {
   console.log(chalk.cyan('\n🔄 Checking for server updates...\n'));
 
@@ -1365,6 +1405,14 @@ export async function restoreProjectConfig(backupPath: string): Promise<void> {
   }
 }
 
+/**
+ * Removes one or more MCP servers by their IDs at the specified scope.
+ *
+ * For each server, removes it from the project configuration or via the `claude mcp remove` command depending on the scope. Also removes the server from the gomcp configuration if applicable. Prints a summary of successful and failed removals.
+ *
+ * @param serverIds - The IDs of the servers to remove
+ * @param scope - The scope from which to remove the servers ('user' or 'project')
+ */
 export async function removeServers(
   serverIds: string[],
   scope: InstallScope = 'user'

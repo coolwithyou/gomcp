@@ -1,7 +1,13 @@
 import inquirer, { QuestionCollection, Answers, DistinctQuestion, CheckboxQuestion } from 'inquirer';
 import chalk from 'chalk';
 
-// Custom prompt wrapper that handles ESC key
+/**
+ * Prompts the user with one or more questions, adding a "Back to previous menu" option to list-type prompts for navigation.
+ *
+ * If the user selects the back option, returns `null` to indicate a back action. Otherwise, returns the user's answers.
+ *
+ * @returns The user's answers, or `null` if the back option is selected.
+ */
 export async function promptWithEscape<T extends Answers = Answers>(
   questions: QuestionCollection<T>,
   _options?: { showEscapeHint?: boolean }
