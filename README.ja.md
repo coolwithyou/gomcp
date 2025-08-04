@@ -12,6 +12,8 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
 
 > 🚀 **Go MCP!** - ゼロから30秒でAIスーパーパワーへ。ツールを選ぶだけ、あとはお任せください。
+> 
+> 🌐 **多言語サポート** - MCPセットアップの全プロセスを日本語、英語、韓国語、中国語、スペイン語で利用可能。いつでも言語を変更できます！
 
 ## 目次
 
@@ -90,6 +92,7 @@ gomcp
 - ✅ インストールを検証
 - 💾 設定のバックアップ/復元
 - 📋 利用可能なサーバーの一覧
+- 🌐 言語を変更
 
 ### バックアップと復元
 

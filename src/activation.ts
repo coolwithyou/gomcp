@@ -16,6 +16,7 @@ import {
 } from './claude-settings.js';
 import { servers } from './servers.js';
 
+
 export interface ServerActivationStatus {
   id: string;
   name: string;

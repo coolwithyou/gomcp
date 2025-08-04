@@ -113,7 +113,7 @@ describe('Installer', () => {
 
       await installServers(['test-server'], new Map(), 'user', false);
 
-      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('Installation failed'));
+      expect(console.error).toHaveBeenCalledWith(expect.stringContaining('errors.errorDetails'));
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Failed to install'));
     });
 
@@ -133,7 +133,7 @@ describe('Installer', () => {
       await installServers(['project-only'], new Map(), 'user', false);
 
       expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('project-only MCP server')
+        expect.stringContaining('installation.projectOnlyServer')
       );
       expect(mockExeca).not.toHaveBeenCalled();
 
@@ -165,13 +165,15 @@ describe('Installer', () => {
 
   describe('Server Verification', () => {
     it('should verify server installations', async () => {
-      const mockOutput = 'MCP Servers:\n- github: running\n- filesystem: running';
+      const mockOutput = 'github: npx -y @modelcontextprotocol/server-github - ✓ Connected\nfilesystem: npx -y @modelcontextprotocol/server-filesystem - ✓ Connected';
       mockExeca.mockResolvedValue({ stdout: mockOutput, stderr: '' } as any);
 
       await verifyInstallations();
 
-      expect(mockExeca).toHaveBeenCalledWith('claude', ['/mcp']);
-      expect(console.log).toHaveBeenCalledWith(mockOutput);
+      expect(mockExeca).toHaveBeenCalledWith('claude', ['mcp', 'list']);
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('MCP Server Status Report'));
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('GitHub - Connected'));
+      expect(console.log).toHaveBeenCalledWith(expect.stringContaining('File System - Connected'));
     });
   });
 

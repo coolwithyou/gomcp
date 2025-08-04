@@ -21,6 +21,43 @@
 
 # Changelog
 
+## [0.13.0] - 2025-08-03
+
+### Added
+- **Multi-language Support**: Complete internationalization (i18n) support for 5 languages
+  - English (en), Korean (ko), Chinese (zh), Spanish (es), Japanese (ja)
+  - All UI elements, menus, messages, prompts, and errors are now localized
+  - Language preference is saved and persisted between sessions
+  - New \"Change Language\" menu option for easy language switching
+  - Automatic fallback to English for missing translations
+
+- **Expanded MCP Server Catalog**: Added 30+ new MCP servers with detailed metadata
+  - New servers include: Serena, Browser Tools, Chrome, Figma, Supabase, Google Suite, Everything Search, EVM, Redis, DuckDuckGo, Brave Search, Screenshot, Zapier, Stripe, YouTube, Discord, Replicate, Hyperbolic, Databricks, Kubernetes, HAProxy, Netbird, OPNSense, Domain Tools, Splunk, Solana Agent Kit, Reed Jobs, Time, MCP Compass, MCP Server Creator, MCP Installer, MCP Proxy
+  - Servers now have detailed descriptions and categorization
+  - Added `preferredScope` and `forceProjectScope` properties for better installation guidance
+
+- **UI/UX Improvements**:
+  - New `--show-descriptions` (-d) flag to control server description visibility
+  - Custom progress bar utilities replacing ora spinner for better feedback
+  - Indeterminate progress bars for unknown duration tasks
+  - Time-based progress bars for tasks with estimated time
+  - Single-line title display (version now appears on the same line as the title)
+
+### Enhanced
+- **Better Scope Detection**: Improved detection of user-level vs project-level MCP servers
+- **Release Command**: Enhanced error handling and TypeScript type safety
+- **Build Process**: Updated to include translation files in the distribution
+
+### Documentation
+- Added Spanish README (README.es.md)
+- Updated all README files with expanded server lists and detailed descriptions
+- Added language selection links to all README files
+
+### Fixed
+- User scope MCP server detection now correctly parses `claude mcp list` output
+- Fixed TypeScript type errors in release command
+- Fixed lint errors and trailing spaces
+
 ## [0.12.5] - 2025-08-02
 
 
