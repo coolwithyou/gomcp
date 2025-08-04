@@ -3,8 +3,6 @@ import chalk from 'chalk';
 import {
   createIndeterminateProgressBar
 } from './utils/progress.js';
-import { i18n, t, Language } from './i18n/index.js';
-import { getLanguagePreference, setLanguagePreference } from './config.js';
 import { servers } from './servers.js';
 import {
   installServers,
@@ -50,39 +48,29 @@ function clearInstalledServersCache() {
 }
 
 export async function mainMenu(defaultScope: InstallScope = 'user', mode?: string, showDescriptions?: boolean) {
-  // Initialize i18n if not already done
-  if (!i18n.getCurrentLanguage()) {
-    const savedLanguage = await getLanguagePreference();
-    await i18n.initialize(savedLanguage);
-  }
-
   // If mode is 'remove', go directly to remove flow
   if (mode === 'remove') {
     await removeFlow(defaultScope);
     return;
   }
 
-  const currentLang = i18n.getCurrentLanguage();
-  const langName = i18n.getAvailableLanguages().find(l => l.code === currentLang)?.name || currentLang;
-
   const result = await promptWithEscape<{ action: string }>(
     [
       {
         type: 'list',
         name: 'action',
-        message: t('mainMenu.title'),
+        message: 'What would you like to do?',
         choices: [
-          { name: t('mainMenu.install'), value: 'install' },
-          { name: t('mainMenu.list'), value: 'list' },
-          { name: t('mainMenu.remove'), value: 'remove' },
-          { name: t('mainMenu.update'), value: 'update' },
-          { name: t('mainMenu.verify'), value: 'verify' },
-          { name: t('mainMenu.activation'), value: 'activation' },
-          { name: t('mainMenu.status'), value: 'status' },
-          { name: t('mainMenu.backup'), value: 'backup' },
-          { name: t('mainMenu.restore'), value: 'restore' },
-          { name: `${t('mainMenu.language')} (${langName})`, value: 'language' },
-          { name: t('mainMenu.exit'), value: 'exit' },
+          { name: '📦 Install new servers', value: 'install' },
+          { name: '📋 List installed servers', value: 'list' },
+          { name: '🗑️  Remove servers', value: 'remove' },
+          { name: '🔄 Update existing servers', value: 'update' },
+          { name: '✅ Verify installations', value: 'verify' },
+          { name: '🔌 Manage MCP activation', value: 'activation' },
+          { name: '📊 Check activation status', value: 'status' },
+          { name: '💾 Backup current configuration', value: 'backup' },
+          { name: '📂 Restore from backup', value: 'restore' },
+          { name: '❌ Exit', value: 'exit' },
         ],
       },
     ],
@@ -91,7 +79,7 @@ export async function mainMenu(defaultScope: InstallScope = 'user', mode?: strin
 
   if (!result) {
     // This shouldn't happen on main menu, but handle it
-    console.log(chalk.gray(`\n${t('messages.goodbye')}\n`));
+    console.log(chalk.gray('\nGoodbye! 👋\n'));
     process.exit(0);
   }
 
@@ -125,11 +113,8 @@ export async function mainMenu(defaultScope: InstallScope = 'user', mode?: strin
     case 'restore':
       await restoreFlow();
       break;
-    case 'language':
-      await languageSelectionFlow();
-      break;
     case 'exit':
-      console.log(chalk.gray(`\n${t('messages.goodbye')}\n`));
+      console.log(chalk.gray('\nGoodbye! 👋\n'));
       process.exit(0);
   }
 
@@ -147,7 +132,7 @@ async function getInstalledServersByScope(): Promise<{ user: Set<string>; projec
   }
 
   const progressBar = createIndeterminateProgressBar({
-    label: t('server.loadingServers')
+    label: 'Loading server list...'
   });
 
   const userServers = new Set<string>();
@@ -155,7 +140,7 @@ async function getInstalledServersByScope(): Promise<{ user: Set<string>; projec
 
   // Get project servers using our mcp-config module
   try {
-    progressBar.updateLabel(t('server.checkingProject'));
+    progressBar.updateLabel('Checking project configuration...');
     const projectServerIds = await getProjectServers();
     projectServerIds.forEach((id) => projectServers.add(id));
   } catch (error) {
@@ -164,11 +149,11 @@ async function getInstalledServersByScope(): Promise<{ user: Set<string>; projec
 
   // Then get all servers from claude mcp list
   try {
-    progressBar.updateLabel(t('server.connectingMcp'));
+    progressBar.updateLabel('Connecting to Claude MCP...');
     const { execa } = await import('execa');
     const { stdout } = await execa('claude', ['mcp', 'list']);
 
-    progressBar.updateLabel(t('server.parsingServers'));
+    progressBar.updateLabel('Parsing installed servers...');
     // Parse the output to get installed servers
     const lines = stdout.split('\n');
     for (const line of lines) {
@@ -190,9 +175,9 @@ async function getInstalledServersByScope(): Promise<{ user: Set<string>; projec
       }
     }
 
-    progressBar.succeed(t('server.serverListLoaded'));
+    progressBar.succeed('Server list loaded successfully');
   } catch (error) {
-    progressBar.fail(t('server.connectionFailed'));
+    progressBar.fail('Could not connect to Claude MCP (using local config only)');
     // If claude mcp list fails, servers remain empty
   }
 
@@ -212,10 +197,10 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
     {
       type: 'list',
       name: 'scope',
-      message: t('prompts.installationScope'),
+      message: 'Installation scope:',
       choices: [
-        { name: t('choices.userScope'), value: 'user' },
-        { name: t('choices.projectScope'), value: 'project' },
+        { name: '🌍 User (Available in all projects)', value: 'user' },
+        { name: '📁 Project (Current project only)', value: 'project' },
       ],
       default: defaultScope,
     },
@@ -236,8 +221,7 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
   const categories = [...new Set(servers.map((s) => s.category))];
 
   for (const category of categories) {
-    const categoryName = t(`categories.${category}`) || category.toUpperCase();
-    choices.push(new inquirer.Separator(chalk.yellow(`=== ${categoryName} ===`)));
+    choices.push(new inquirer.Separator(chalk.yellow(`=== ${category.toUpperCase()} ===`)));
 
     const categoryServers = servers.filter((s) => s.category === category);
     for (const server of categoryServers) {
@@ -254,25 +238,25 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
       if (isInstalledInSelectedScope) {
         // Already installed in the selected scope - disable it
         choices.push({
-          name: chalk.gray(`${icon} ${server.name} (${t('server.alreadyInstalled', { scope })})`),
+          name: chalk.gray(`${icon} ${server.name} (Already installed in ${scope})`),
           value: server.id,
           disabled: true,
         });
       } else {
-        const recommended = server.recommended ? chalk.green(` ${t('server.recommended')}`) : '';
-        const requiresConfig = server.requiresConfig ? chalk.gray(` ${t('server.requiresConfig')}`) : '';
+        const recommended = server.recommended ? chalk.green(' (Recommended)') : '';
+        const requiresConfig = server.requiresConfig ? chalk.gray(' - requires config') : '';
         const otherScopeNote = isInstalledInOtherScope
-          ? chalk.blue(` (${t('server.installedIn', { scope: scope === 'user' ? 'project' : 'user' })})`)
+          ? chalk.blue(` (installed in ${scope === 'user' ? 'project' : 'user'})`)
           : '';
 
         // Show project-only or scope preference indicators
         let scopeIndicator = '';
         if (server.forceProjectScope) {
-          scopeIndicator = chalk.red(` ${t('server.projectOnly')}`);
+          scopeIndicator = chalk.red(' 🔒 Project-only');
         } else if (server.preferredScope === 'project') {
-          scopeIndicator = chalk.yellow(` ${t('server.prefersProject')}`);
+          scopeIndicator = chalk.yellow(' 📁 Prefers project');
         } else if (server.preferredScope === 'user') {
-          scopeIndicator = chalk.cyan(` ${t('server.prefersUser')}`);
+          scopeIndicator = chalk.cyan(' 👤 Prefers user');
         }
 
         choices.push({
@@ -292,7 +276,7 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
   const selectionResult = await checkboxPromptWithEscape({
     type: 'checkbox',
     name: 'selectedServers',
-    message: t('prompts.selectServers'),
+    message: 'Select MCP servers to install (use space to select, enter to confirm):',
     choices,
     pageSize: 20,
     // validate removed to allow back navigation
@@ -308,7 +292,7 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
   // Check if any servers were selected (excluding the back option)
   if (!selectedServers || selectedServers.length === 0) {
     console.log(
-      chalk.yellow(`\n${t('messages.noServersSelected')}`)
+      chalk.yellow('\nNo servers selected. Please select at least one server to install.')
     );
     // Re-run the installation flow
     return installFlow(defaultScope, showDescriptions);
@@ -321,15 +305,15 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
     const server = servers.find((s) => s.id === serverId);
     if (!server) continue;
     if (server.requiresConfig && server.configOptions) {
-      console.log(chalk.cyan(`\n📝 ${t('server.configuring', { serverName: server.name })}:`));
+      console.log(chalk.cyan(`\n📝 Configure ${server.name}:`));
       const config = await collectServerConfig(server);
       configs.set(serverId, config);
     }
   }
 
   // Confirm installation
-  console.log(chalk.bold(`\n📋 ${t('server.installationSummary')}`));
-  console.log(chalk.gray(`${t('server.scope', { scope: scope === 'user' ? t('choices.userScope').replace(/[🌍📁] /u, '') : t('choices.projectScope').replace(/[🌍📁] /u, '') })}\n`));
+  console.log(chalk.bold('\n📋 Installation Summary:'));
+  console.log(chalk.gray(`Scope: ${scope === 'user' ? 'User (Global)' : 'Project'}\n`));
   for (const serverId of selectedServers) {
     const server = servers.find((s) => s.id === serverId);
     if (!server) continue;
@@ -341,7 +325,7 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
     {
       type: 'confirm',
       name: 'confirm',
-      message: t('prompts.confirmInstallation'),
+      message: 'Proceed with installation?',
       default: true,
     },
   ]);
@@ -356,7 +340,7 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
     await installServers(selectedServers, configs, scope as InstallScope, false);
     clearInstalledServersCache(); // Clear cache after installation
   } else {
-    console.log(chalk.yellow(`\n${t('messages.installationCancelled')}`));
+    console.log(chalk.yellow('\nInstallation cancelled.'));
   }
 }
 
@@ -403,8 +387,8 @@ async function promptForOption(option: ConfigOption): Promise<string | boolean |
           { name: '~/Projects', value: path.join(os.homedir(), 'Projects'), checked: true },
           { name: '~/Desktop', value: path.join(os.homedir(), 'Desktop') },
           { name: '~/Downloads', value: path.join(os.homedir(), 'Downloads') },
-          { name: t('fileSystem.currentDirectory'), value: process.cwd() },
-          { name: t('fileSystem.customPath'), value: 'custom' },
+          { name: 'Current directory', value: process.cwd() },
+          { name: 'Custom path...', value: 'custom' },
         ],
       });
 
@@ -420,13 +404,13 @@ async function promptForOption(option: ConfigOption): Promise<string | boolean |
           {
             type: 'input',
             name: 'customPath',
-            message: t('fileSystem.enterCustomPath'),
+            message: 'Enter custom path:',
             validate: (input: string) => {
               try {
-                return input.length > 0 || t('validation.pathCannotBeEmpty');
+                return input.length > 0 || 'Path cannot be empty';
               } catch (error) {
-                console.error(chalk.red(t('validation.pathValidationError')), error);
-                return t('validation.validationFailed');
+                console.error(chalk.red('Path validation error:'), error);
+                return 'Validation failed. Please try again.';
               }
             },
           },
@@ -464,8 +448,8 @@ async function promptForOption(option: ConfigOption): Promise<string | boolean |
         const validationResult = option.validate ? option.validate(input) : true;
         return validationResult;
       } catch (error) {
-        console.error(chalk.red(t('validation.validationErrorFor', { key: option.key })), error);
-        return t('validation.validationFailed');
+        console.error(chalk.red(`Validation error for ${option.key}:`), error);
+        return 'Validation failed. Please try again.';
       }
     };
   }
@@ -486,11 +470,11 @@ async function backupFlow() {
     {
       type: 'list',
       name: 'backupType',
-      message: t('prompts.backupType'),
+      message: 'What would you like to backup?',
       choices: [
-        { name: t('choices.backupUser'), value: 'user' },
-        { name: t('choices.backupProject'), value: 'project' },
-        { name: t('choices.backupAll'), value: 'all' },
+        { name: '👤 User configuration only', value: 'user' },
+        { name: '📁 Project configuration only', value: 'project' },
+        { name: '💾 All configurations', value: 'all' },
       ],
     },
   ]);
@@ -519,11 +503,11 @@ async function restoreFlow() {
     {
       type: 'list',
       name: 'restoreType',
-      message: t('prompts.restoreType'),
+      message: 'What type of backup would you like to restore?',
       choices: [
-        { name: t('choices.restoreUser'), value: 'user' },
-        { name: t('choices.restoreProject'), value: 'project' },
-        { name: t('choices.restoreAuto'), value: 'auto' },
+        { name: '👤 User configuration backup', value: 'user' },
+        { name: '📁 Project configuration backup', value: 'project' },
+        { name: '💾 Full backup (auto-detect)', value: 'auto' },
       ],
     },
   ]);
@@ -545,14 +529,14 @@ async function restoreFlow() {
     {
       type: 'input',
       name: 'backupPath',
-      message: t('prompts.backupPath'),
+      message: 'Enter backup file path:',
       default: defaultPath,
       validate: (input: string) => {
         try {
-          return input.length > 0 || t('validation.pathCannotBeEmpty');
+          return input.length > 0 || 'Path cannot be empty';
         } catch (error) {
-          console.error(chalk.red(t('errors.backupPathValidationError')), error);
-          return t('validation.validationFailed');
+          console.error(chalk.red('Backup path validation error:'), error);
+          return 'Validation failed. Please try again.';
         }
       },
     },
@@ -653,7 +637,7 @@ async function removeFlow(_defaultScope: InstallScope = 'user') {
   progressBar.succeed('Installed servers loaded');
 
   if (installedServers.length === 0) {
-    console.log(chalk.yellow(`\n${t('messages.noServersInstalled')}`));
+    console.log(chalk.yellow('\nNo MCP servers installed.'));
     return;
   }
 
@@ -666,7 +650,7 @@ async function removeFlow(_defaultScope: InstallScope = 'user') {
   const selectionResult = await checkboxPromptWithEscape({
     type: 'checkbox',
     name: 'selectedServers',
-    message: t('prompts.selectServersRemove'),
+    message: 'Select MCP servers to remove:',
     choices,
     // validate removed - empty selection is handled after prompt
   });
@@ -678,7 +662,7 @@ async function removeFlow(_defaultScope: InstallScope = 'user') {
   const { selectedServers } = selectionResult;
 
   if (selectedServers.length === 0) {
-    console.log(chalk.yellow(`\n${t('messages.noServersSelectedRemove')}`));
+    console.log(chalk.yellow('\nNo servers selected for removal.'));
     return;
   }
 
@@ -687,7 +671,7 @@ async function removeFlow(_defaultScope: InstallScope = 'user') {
     {
       type: 'confirm',
       name: 'confirm',
-      message: t('prompts.confirmRemoval', { count: selectedServers.length }),
+      message: `Remove ${selectedServers.length} server(s)?`,
       default: false,
     },
   ]);
@@ -699,7 +683,7 @@ async function removeFlow(_defaultScope: InstallScope = 'user') {
   const { confirm } = confirmResult;
 
   if (!confirm) {
-    console.log(chalk.yellow(`\n${t('messages.removalCancelled')}`));
+    console.log(chalk.yellow('\nRemoval cancelled.'));
     return;
   }
 
@@ -763,7 +747,7 @@ async function activationManagementFlow() {
       {
         type: 'confirm',
         name: 'create',
-        message: t('prompts.createClaudeSettings'),
+        message: 'Claude Code settings not found. Create default settings?',
         default: true,
       },
     ]);
@@ -780,15 +764,15 @@ async function activationManagementFlow() {
   const serverStatuses = await getProjectServersActivationStatus();
 
   if (serverStatuses.length === 0) {
-    console.log(chalk.yellow(`\n${t('messages.noProjectServers')}`));
-    console.log(chalk.gray(t('messages.installServersFirst')));
+    console.log(chalk.yellow('\nNo MCP servers installed in this project.'));
+    console.log(chalk.gray('Install servers first using the "Install new servers" option.'));
     return;
   }
 
   // Show current status
-  console.log(chalk.bold(`\n📊 ${t('server.currentActivationStatus')}\n`));
+  console.log(chalk.bold('\n📊 Current Activation Status:\n'));
   console.log(
-    `${t('messages.allProjectServersEnabled')}: ${
+    `All project servers enabled: ${
       status.enableAllProjectMcpServers ? chalk.green('✓ Yes') : chalk.red('✗ No')
     }`
   );
@@ -798,17 +782,17 @@ async function activationManagementFlow() {
     {
       type: 'list',
       name: 'strategy',
-      message: t('prompts.activationStrategy'),
+      message: 'Choose activation strategy:',
       choices: [
         {
-          name: t('choices.activateAll'),
+          name: '🌍 Enable all project servers (Recommended)',
           value: 'all',
           disabled: status.enableAllProjectMcpServers ? 'Already enabled' : false,
         },
-        { name: t('choices.activateSpecific'), value: 'specific' },
-        { name: t('choices.managePermissions'), value: 'permissions' },
-        { name: t('choices.deactivateServers'), value: 'deactivate' },
-        { name: t('choices.back'), value: 'back' },
+        { name: '📦 Select specific servers to enable', value: 'specific' },
+        { name: '🔑 Manage server permissions', value: 'permissions' },
+        { name: '🗑️  Deactivate servers', value: 'deactivate' },
+        { name: '← Back', value: 'back' },
       ],
     },
   ]);
@@ -822,8 +806,8 @@ async function activationManagementFlow() {
   switch (strategy) {
     case 'all':
       await activateServers([], 'all');
-      console.log(chalk.green(`\n✓ ${t('messages.selectedServersActivated')}`));
-      console.log(chalk.gray(t('messages.restartClaude')));
+      console.log(chalk.green('\n✓ All project MCP servers are now activated!'));
+      console.log(chalk.gray('Restart Claude Code for changes to take effect.'));
       break;
 
     case 'specific':
@@ -844,7 +828,7 @@ async function specificServerActivationFlow(serverStatuses: ServerActivationStat
   const inactiveServers = serverStatuses.filter((s) => !s.isActivated);
 
   if (inactiveServers.length === 0) {
-    console.log(chalk.yellow(`\n${t('messages.allServersActivated')}`));
+    console.log(chalk.yellow('\nAll servers are already activated.'));
     return;
   }
 
@@ -856,7 +840,7 @@ async function specificServerActivationFlow(serverStatuses: ServerActivationStat
   const selectionResult = await checkboxPromptWithEscape({
     type: 'checkbox',
     name: 'servers',
-    message: t('prompts.selectServersActivate'),
+    message: 'Select servers to activate:',
     choices,
   });
 
@@ -865,8 +849,8 @@ async function specificServerActivationFlow(serverStatuses: ServerActivationStat
   }
 
   await activateServers(selectionResult.servers, 'specific');
-  console.log(chalk.green(`\n✓ ${t('messages.selectedServersActivated')}`));
-  console.log(chalk.gray(t('messages.restartClaude')));
+  console.log(chalk.green('\n✓ Selected servers activated!'));
+  console.log(chalk.gray('Restart Claude Code for changes to take effect.'));
 }
 
 async function permissionsManagementFlow(serverStatuses: ServerActivationStatus[]) {
@@ -874,12 +858,12 @@ async function permissionsManagementFlow(serverStatuses: ServerActivationStatus[
     {
       type: 'list',
       name: 'action',
-      message: t('prompts.permissionManagement'),
+      message: 'Permission management:',
       choices: [
-        { name: t('choices.addPermissions'), value: 'add' },
-        { name: t('choices.removePermissions'), value: 'remove' },
-        { name: t('choices.viewPermissions'), value: 'view' },
-        { name: t('choices.back'), value: 'back' },
+        { name: '➕ Add wildcard permissions for servers', value: 'add' },
+        { name: '➖ Remove server permissions', value: 'remove' },
+        { name: '👁️  View current permissions', value: 'view' },
+        { name: '← Back', value: 'back' },
       ],
     },
   ]);
@@ -898,7 +882,7 @@ async function permissionsManagementFlow(serverStatuses: ServerActivationStatus[
       );
 
       if (serversWithoutWildcard.length === 0) {
-        console.log(chalk.yellow(`\n${t('messages.allServersHavePermissions')}`));
+        console.log(chalk.yellow('\nAll servers already have wildcard permissions.'));
         return;
       }
 
@@ -910,14 +894,14 @@ async function permissionsManagementFlow(serverStatuses: ServerActivationStatus[
       const addResult = await checkboxPromptWithEscape({
         type: 'checkbox',
         name: 'servers',
-        message: t('prompts.selectPermissionsAdd'),
+        message: 'Select servers to add wildcard permissions:',
         choices: addChoices,
       });
 
       if (addResult && addResult.servers.length > 0) {
         await activateServers(addResult.servers, 'permission');
-        console.log(chalk.green(`\n✓ ${t('messages.permissionsAdded')}`));
-        console.log(chalk.gray(t('messages.restartClaude')));
+        console.log(chalk.green('\n✓ Wildcard permissions added!'));
+        console.log(chalk.gray('Restart Claude Code for changes to take effect.'));
       }
       break;
 
@@ -925,7 +909,7 @@ async function permissionsManagementFlow(serverStatuses: ServerActivationStatus[
       const serverPermissions = status.permissions.filter((p) => p.startsWith('mcp__'));
 
       if (serverPermissions.length === 0) {
-        console.log(chalk.yellow(`\n${t('messages.noPermissionsToRemove')}`));
+        console.log(chalk.yellow('\nNo server permissions to remove.'));
         return;
       }
 
@@ -937,24 +921,24 @@ async function permissionsManagementFlow(serverStatuses: ServerActivationStatus[
       const removeResult = await checkboxPromptWithEscape({
         type: 'checkbox',
         name: 'permissions',
-        message: t('prompts.selectPermissionsRemove'),
+        message: 'Select permissions to remove:',
         choices: removeChoices,
       });
 
       if (removeResult && removeResult.permissions.length > 0) {
         const { removePermissions } = await import('./claude-settings.js');
         await removePermissions(removeResult.permissions);
-        console.log(chalk.green(`\n✓ ${t('messages.permissionsRemoved')}`));
-        console.log(chalk.gray(t('messages.restartClaude')));
+        console.log(chalk.green('\n✓ Permissions removed!'));
+        console.log(chalk.gray('Restart Claude Code for changes to take effect.'));
       }
       break;
 
     case 'view':
-      console.log(chalk.bold(`\n🔑 ${t('server.currentPermissions')}\n`));
+      console.log(chalk.bold('\n🔑 Current Server Permissions:\n'));
       const currentServerPermissions = status.permissions.filter((p) => p.startsWith('mcp__'));
 
       if (currentServerPermissions.length === 0) {
-        console.log(chalk.gray(t('messages.noPermissionsConfigured')));
+        console.log(chalk.gray('No server permissions configured.'));
       } else {
         for (const permission of currentServerPermissions) {
           console.log(`  ${chalk.cyan(permission)}`);
@@ -968,7 +952,7 @@ async function deactivationFlow(serverStatuses: ServerActivationStatus[]) {
   const activeServers = serverStatuses.filter((s) => s.isActivated);
 
   if (activeServers.length === 0) {
-    console.log(chalk.yellow(`\n${t('messages.noServersActive')}`));
+    console.log(chalk.yellow('\nNo servers are currently activated.'));
     return;
   }
 
@@ -980,7 +964,7 @@ async function deactivationFlow(serverStatuses: ServerActivationStatus[]) {
   const selectionResult = await checkboxPromptWithEscape({
     type: 'checkbox',
     name: 'servers',
-    message: t('prompts.selectServersDeactivate'),
+    message: 'Select servers to deactivate:',
     choices,
   });
 
@@ -992,7 +976,7 @@ async function deactivationFlow(serverStatuses: ServerActivationStatus[]) {
     {
       type: 'confirm',
       name: 'confirm',
-      message: t('prompts.confirmDeactivation', { count: selectionResult.servers.length }),
+      message: `Deactivate ${selectionResult.servers.length} server(s)?`,
       default: false,
     },
   ]);
@@ -1002,44 +986,6 @@ async function deactivationFlow(serverStatuses: ServerActivationStatus[]) {
   }
 
   await deactivateServers(selectionResult.servers);
-  console.log(chalk.green(`\n✓ ${t('messages.serversDeactivated')}`));
-  console.log(chalk.gray(t('messages.restartClaude')));
-}
-
-async function languageSelectionFlow(): Promise<void> {
-  const currentLang = i18n.getCurrentLanguage();
-  const languages = i18n.getAvailableLanguages();
-
-  console.log(chalk.cyan(`\n${t('messages.currentLanguage', { language: languages.find(l => l.code === currentLang)?.name || currentLang })}\n`));
-
-  const choices = languages.map(lang => ({
-    name: lang.name + (lang.code === currentLang ? ' ✓' : ''),
-    value: lang.code,
-  }));
-
-  const result = await promptWithEscape<{ language: Language }>([
-    {
-      type: 'list',
-      name: 'language',
-      message: t('prompts.selectLanguage'),
-      choices,
-    },
-  ]);
-
-  if (!result) {
-    return;
-  }
-
-  const { language } = result;
-
-  if (language === currentLang) {
-    return; // No change needed
-  }
-
-  // Change language
-  i18n.setLanguage(language);
-  await setLanguagePreference(language);
-
-  const newLangName = languages.find(l => l.code === language)?.name || language;
-  console.log(chalk.green(`\n✓ ${t('messages.languageChanged', { language: newLangName })}\n`));
+  console.log(chalk.green('\n✓ Selected servers deactivated!'));
+  console.log(chalk.gray('Restart Claude Code for changes to take effect.'));
 }

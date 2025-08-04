@@ -1,3 +1,24 @@
+## [v0.12.5] - 2025-08-03
+
+### Features
+
+- Enhance MCP server management with expanded catalog and improved UX (#3)
+
+### Bug Fixes
+
+- remove trailing space in changelog.ts
+- handle undefined subject parameter in changelog generation
+
+### Documentation
+
+- update README server lists with detailed descriptions and categories
+
+### Chores
+
+- origin/main
+
+
+
 # Changelog
 
 ## [0.13.0] - 2025-08-03

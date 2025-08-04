@@ -101,6 +101,11 @@ async function getCommitsSinceTag(fromTag?: string): Promise<CommitInfo[]> {
 }
 
 function parseCommit(hash: string, subject: string, body?: string): CommitInfo | null {
+  // Validate required parameters
+  if (!hash || !subject) {
+    return null;
+  }
+
   // Skip release commits
   if (subject.toLowerCase().includes('release') || subject.toLowerCase().includes('version')) {
     return null;
