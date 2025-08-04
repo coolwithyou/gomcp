@@ -325,16 +325,144 @@ export async function verifyInstallations(): Promise<void> {
   });
 
   try {
-    // Run claude /mcp command to get status
-    const { stdout } = await execa('claude', ['/mcp']);
-
+    // Get server status from claude mcp list
+    let serversStatus: Map<string, { command: string; connected: boolean }> = new Map();
+    
+    try {
+      const { stdout } = await execa('claude', ['mcp', 'list']);
+      
+      if (stdout && stdout.includes(':')) {
+        const lines = stdout.split('\n');
+        
+        for (const line of lines) {
+          if (line.includes('Checking MCP server health') || line.trim() === '') {
+            continue;
+          }
+          
+          // Parse server lines like "github: npx -y @modelcontextprotocol/server-github - ✓ Connected"
+          const match = line.match(/^(\S+):\s+(.+?)\s+-\s+(✓|✗)/);
+          if (match) {
+            const serverId = match[1];
+            const command = match[2];
+            const connected = match[3] === '✓';
+            
+            serversStatus.set(serverId, { command, connected });
+          }
+        }
+      }
+    } catch (error) {
+      progressBar.fail('Failed to get MCP server status');
+      console.log(chalk.yellow('\n⚠️  Could not run "claude mcp list" command'));
+      console.log(chalk.gray('Make sure Claude Code is installed and accessible'));
+      return;
+    }
+    
+    if (serversStatus.size === 0) {
+      progressBar.fail('No MCP servers found');
+      console.log(chalk.yellow('\nNo MCP servers are currently configured.'));
+      console.log(chalk.gray('Install some servers first with "gomcp"'));
+      return;
+    }
+    
     progressBar.stop();
-    console.log(chalk.bold('\n📊 MCP Server Status:\n'));
-    console.log(stdout);
+    
+    console.log(chalk.bold('\n📊 MCP Server Status Report\n'));
+    
+    let allHealthy = true;
+    const failedServers: string[] = [];
+    
+    // Check each server
+    for (const [serverId, status] of serversStatus) {
+      const serverDef = servers.find(s => s.id === serverId);
+      const serverName = serverDef?.name || serverId;
+      
+      if (status.connected) {
+        console.log(`${chalk.green('✓')} ${chalk.bold(serverName)} - Connected`);
+        
+        // Check if server requires config but might be missing it
+        if (serverDef?.requiresConfig) {
+          // Check project config for required settings
+          try {
+            const projectConfigPath = path.join(process.cwd(), '.mcp.json');
+            const projectConfig = JSON.parse(await fs.readFile(projectConfigPath, 'utf-8'));
+            
+            if (projectConfig.mcpServers?.[serverId]) {
+              const serverConfig = projectConfig.mcpServers[serverId];
+              if (serverConfig.env) {
+                const envVars = Object.keys(serverConfig.env);
+                if (envVars.length > 0) {
+                  console.log(chalk.gray(`  └─ Environment variables configured: ${envVars.join(', ')}`));
+                }
+              }
+            }
+          } catch {
+            // Project config not available or server not in it
+          }
+        }
+      } else {
+        console.log(`${chalk.red('✗')} ${chalk.bold(serverName)} - ${chalk.red('Failed to connect')}`);
+        failedServers.push(serverName);
+        allHealthy = false;
+        
+        // Provide troubleshooting tips based on server type
+        if (serverDef) {
+          console.log(chalk.yellow('  └─ Troubleshooting tips:'));
+          
+          if (serverDef.requiresConfig && serverDef.configOptions) {
+            console.log(chalk.gray(`     • Check required configuration: ${serverDef.configOptions.map(opt => opt.key).join(', ')}`));
+          }
+          
+          // Server-specific tips
+          switch (serverId) {
+            case 'github':
+              console.log(chalk.gray('     • Ensure GITHUB_TOKEN environment variable is set'));
+              break;
+            case 'postgresql':
+              console.log(chalk.gray('     • Verify database connection string'));
+              console.log(chalk.gray('     • Check if PostgreSQL server is running'));
+              break;
+            case 'filesystem':
+              console.log(chalk.gray('     • Verify configured paths exist and are accessible'));
+              break;
+            case 'docker':
+              console.log(chalk.gray('     • Ensure Docker daemon is running'));
+              console.log(chalk.gray('     • Check Docker permissions'));
+              break;
+            case 'slack':
+              console.log(chalk.gray('     • Verify Slack app token and permissions'));
+              break;
+          }
+          
+          console.log(chalk.gray('     • Try reinstalling with: gomcp'));
+          console.log(chalk.gray(`     • Check logs: claude mcp logs ${serverId}`));
+        }
+      }
+    }
+    
+    // Summary
+    console.log(''); // Empty line
+    if (allHealthy) {
+      console.log(chalk.green('✅ All MCP servers are connected and healthy!'));
+    } else {
+      console.log(chalk.yellow(`⚠️  ${failedServers.length} server(s) failed to connect`));
+      console.log(chalk.gray('\nUse the troubleshooting tips above to resolve connection issues.'));
+      
+      // Try to run claude /mcp for additional diagnostics
+      console.log(chalk.gray('\nTrying to get additional diagnostics...'));
+      try {
+        const { stdout } = await execa('claude', ['/mcp'], { timeout: 5000 });
+        if (stdout) {
+          console.log(chalk.gray('\nAdditional MCP status from Claude:'));
+          console.log(stdout);
+        }
+      } catch {
+        // Claude /mcp command failed or timed out - that's okay
+      }
+    }
+    
   } catch (error) {
-    progressBar.fail('Failed to check MCP server status');
+    progressBar.fail('Failed to verify installations');
     console.error(chalk.red('Error:'), error);
-    console.log(chalk.gray('\nMake sure Claude Code is installed and accessible.'));
   }
 }
 
@@ -522,35 +650,134 @@ interface InstalledServer {
 }
 
 async function getInstalledServers(): Promise<InstalledServer[]> {
-  const configPath = path.join(os.homedir(), '.claude', 'config.json');
+  const installedServers: InstalledServer[] = [];
 
   try {
-    const configData = await fs.readFile(configPath, 'utf-8');
-    const config = JSON.parse(configData);
+    // Get servers from claude mcp list
+    const { stdout } = await execa('claude', ['mcp', 'list']);
 
-    if (!config.mcpServers) {
-      return [];
-    }
+    if (stdout && stdout.includes(':')) {
+      const lines = stdout.split('\n');
 
-    const installedServers: InstalledServer[] = [];
+      for (const line of lines) {
+        if (line.includes('Checking MCP server health') || line.trim() === '') {
+          continue;
+        }
 
-    for (const [serverId, serverConfig] of Object.entries(config.mcpServers)) {
-      if (typeof serverConfig === 'object' && serverConfig !== null) {
-        const server = serverConfig as Record<string, unknown>;
-        installedServers.push({
-          id: serverId,
-          package: typeof server.package === 'string' ? server.package : '',
-          command: typeof server.command === 'string' ? server.command : undefined,
-          args: Array.isArray(server.args) ? server.args as string[] : undefined,
-          config: typeof server.config === 'object' && server.config !== null ? server.config as Record<string, unknown> : undefined,
-        });
+        // Parse server lines like "github: npx -y @modelcontextprotocol/server-github - ✓ Connected"
+        const match = line.match(/^(\S+):\s+(.+?)\s+-\s+(✓|✗)/);
+        if (match) {
+          const serverId = match[1];
+          const commandStr = match[2];
+          
+          // Find the server definition
+          const serverDef = servers.find((s) => s.id === serverId);
+          
+          // Parse command to extract package name and args
+          let packageName = serverDef?.package || '';
+          let args: string[] = [];
+          
+          if (commandStr.includes('npx')) {
+            const npxMatch = commandStr.match(/npx\s+-y\s+(@?\S+)/);
+            if (npxMatch) {
+              packageName = npxMatch[1];
+            }
+            // Extract any additional arguments
+            const argsMatch = commandStr.match(/npx\s+-y\s+@?\S+\s+(.+)/);
+            if (argsMatch) {
+              args = argsMatch[1].split(/\s+/);
+            }
+          }
+          
+          installedServers.push({
+            id: serverId,
+            package: packageName,
+            command: commandStr,
+            args: args.length > 0 ? args : undefined,
+            config: undefined, // Config is not available from claude mcp list
+          });
+        }
       }
+    }
+    
+    // Also check project .mcp.json for project-level servers
+    try {
+      const projectConfigPath = path.join(process.cwd(), '.mcp.json');
+      const projectConfig = JSON.parse(await fs.readFile(projectConfigPath, 'utf-8'));
+      
+      if (projectConfig.mcpServers) {
+        for (const [serverId, serverConfig] of Object.entries(projectConfig.mcpServers)) {
+          // Check if already in list
+          const existing = installedServers.find(s => s.id === serverId);
+          if (!existing && typeof serverConfig === 'object' && serverConfig !== null) {
+            const cfg = serverConfig as Record<string, unknown>;
+            const serverDef = servers.find((s) => s.id === serverId);
+            
+            installedServers.push({
+              id: serverId,
+              package: serverDef?.package || '',
+              command: typeof cfg.command === 'string' ? cfg.command : undefined,
+              args: Array.isArray(cfg.args) ? cfg.args as string[] : undefined,
+              config: typeof cfg.config === 'object' && cfg.config !== null ? cfg.config as Record<string, unknown> : undefined,
+            });
+          }
+        }
+      }
+    } catch {
+      // Project config doesn't exist or is invalid
     }
 
     return installedServers;
   } catch (error) {
-    return [];
+    // If claude mcp list fails, fall back to project config only
+    try {
+      const projectConfigPath = path.join(process.cwd(), '.mcp.json');
+      const projectConfig = JSON.parse(await fs.readFile(projectConfigPath, 'utf-8'));
+      
+      if (projectConfig.mcpServers) {
+        for (const [serverId, serverConfig] of Object.entries(projectConfig.mcpServers)) {
+          if (typeof serverConfig === 'object' && serverConfig !== null) {
+            const cfg = serverConfig as Record<string, unknown>;
+            const serverDef = servers.find((s) => s.id === serverId);
+            
+            installedServers.push({
+              id: serverId,
+              package: serverDef?.package || '',
+              command: typeof cfg.command === 'string' ? cfg.command : undefined,
+              args: Array.isArray(cfg.args) ? cfg.args as string[] : undefined,
+              config: typeof cfg.config === 'object' && cfg.config !== null ? cfg.config as Record<string, unknown> : undefined,
+            });
+          }
+        }
+      }
+      
+      return installedServers;
+    } catch {
+      return [];
+    }
   }
+}
+
+/**
+ * Simple semantic version comparison
+ * Returns -1 if v1 < v2, 0 if v1 === v2, 1 if v1 > v2
+ */
+function compareVersions(v1: string, v2: string): number {
+  const normalize = (v: string) => v.replace(/[^\d.]/g, '').split('.').map(n => parseInt(n) || 0);
+  const parts1 = normalize(v1);
+  const parts2 = normalize(v2);
+
+  const maxLength = Math.max(parts1.length, parts2.length);
+
+  for (let i = 0; i < maxLength; i++) {
+    const num1 = parts1[i] || 0;
+    const num2 = parts2[i] || 0;
+
+    if (num1 < num2) return -1;
+    if (num1 > num2) return 1;
+  }
+
+  return 0;
 }
 
 async function checkForUpdates(
@@ -569,15 +796,46 @@ async function checkForUpdates(
       // Get latest version from npm
       const { stdout: latestVersion } = await execa('npm', ['view', serverDef.package, 'version']);
 
-      // Get current version (simplified - in real implementation we'd check installed version)
-      // For now, we'll mark all as needing update
+      // Get current installed version
+      let currentVersion = 'unknown';
+      try {
+        const { stdout: installedVersionOutput } = await execa('npm', ['list', serverDef.package, '--depth=0', '--json']);
+        const packageInfo = JSON.parse(installedVersionOutput);
+        const dependencies = packageInfo.dependencies || {};
+        if (dependencies[serverDef.package]) {
+          currentVersion = dependencies[serverDef.package].version || 'unknown';
+        }
+      } catch (versionError) {
+        // If we can't get the installed version, try alternative method
+        try {
+          const { stdout: globalVersionOutput } = await execa('npm', ['list', serverDef.package, '-g', '--depth=0', '--json']);
+          const globalPackageInfo = JSON.parse(globalVersionOutput);
+          const globalDependencies = globalPackageInfo.dependencies || {};
+          if (globalDependencies[serverDef.package]) {
+            currentVersion = globalDependencies[serverDef.package].version || 'unknown';
+          }
+        } catch (globalError) {
+          // Still couldn't get version, use fallback
+          currentVersion = 'installed';
+        }
+      }
+
+      // Compare versions using semver-like comparison
+      const needsUpdate = currentVersion === 'unknown' || currentVersion === 'installed' ||
+                         compareVersions(currentVersion, latestVersion.trim()) < 0;
+
       updateInfo.set(installed.id, {
-        current: 'installed',
+        current: currentVersion,
         latest: latestVersion.trim(),
-        needsUpdate: true,
+        needsUpdate,
       });
     } catch (error) {
-      // Skip if we can't check version
+      // If we can't check npm version, mark as unknown
+      updateInfo.set(installed.id, {
+        current: 'unknown',
+        latest: 'unknown',
+        needsUpdate: false,
+      });
     }
   }
 
