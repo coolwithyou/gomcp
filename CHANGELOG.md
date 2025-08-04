@@ -1,3 +1,41 @@
+## [v0.13.0] - 2025-08-04
+
+### Features
+
+- enhance MCP server verification with detailed status reporting
+- add --show-descriptions flag to control server description visibility
+- expand MCP server catalog with detailed metadata
+- add progress bar utilities for better UX
+
+### Bug Fixes
+
+- restore i18n implementation in installer.ts after merge conflict
+- update CI workflow to use typecheck script instead of build with --noEmit
+- update tests to match new i18n message keys
+- resolve ESLint and TypeScript errors
+- address code review feedback
+- improve user scope MCP server detection
+
+### Documentation
+
+- update README with expanded server list
+
+### Code Style
+
+- remove trailing whitespace in i18n and update notification modules
+
+### Code Refactoring
+
+- remove unused i18n import from activation module
+
+### Chores
+
+- update package-lock.json
+- 0.13.0
+- [feat] 다국어 지원 기능 추가 (5개 언어: 영어, 한국어, 중국어, 스페인어, 일본어) (#4)
+
+
+
 ## [v0.12.5] - 2025-08-03
 
 ### Features
