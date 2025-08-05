@@ -1054,3 +1054,5 @@ ${t('messages.currentLanguage', { language: languages.find(l => l.code === curre
 ✓ ${t('messages.languageChanged', { language: newLangName })}
 `));
 }
+
+export { activationManagementFlow };

@@ -1,5 +1,6 @@
 import { execa } from 'execa';
 import chalk from 'chalk';
+import inquirer from 'inquirer';
 import {
   createIndeterminateProgressBar,
   IndeterminateProgressBar
@@ -81,8 +82,43 @@ export async function installServers(
     );
   }
 
-  console.log(`\nRun ${chalk.bold('claude')} to start using Claude Code with your new MCP servers`);
-  console.log(`Use ${chalk.bold('/mcp')} in Claude Code to check server status\n`);
+  console.log(`
+Run ${chalk.bold('claude')} to start using Claude Code with your new MCP servers`);
+  console.log(`Use ${chalk.bold('/mcp')} in Claude Code to check server status
+`);
+
+  // Ask if user wants to activate servers now (only for project scope)
+  if (scope === 'project' && successful.length > 0) {
+    const shouldActivate = await promptForActivation(scope, true);
+    if (shouldActivate) {
+      // Dynamic import to avoid circular dependency
+      const { activationManagementFlow } = await import('./ui.js');
+      await activationManagementFlow();
+    }
+  }
+}
+
+async function promptForActivation(scope: InstallScope, projectServersInstalled: boolean): Promise<boolean> {
+  // Only prompt for activation if project servers were installed
+  if (scope !== 'project' || !projectServersInstalled) {
+    return false;
+  }
+
+  try {
+    const response = await inquirer.prompt([
+      {
+        type: 'confirm',
+        name: 'activate',
+        message: 'Would you like to activate the installed MCP servers now?',
+        default: true,
+      },
+    ]);
+
+    return response.activate;
+  } catch (error) {
+    // User pressed Ctrl+C or ESC, treat as "No"
+    return false;
+  }
 }
 
 
