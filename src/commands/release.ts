@@ -117,6 +117,16 @@ export async function runRelease(releaseType: ReleaseType, options: ReleaseOptio
     const { stdout: newVersion } = await execa('npm', ['pkg', 'get', 'version']);
     const cleanNewVersion = newVersion?.replace(/"/g, '') || '';
 
+    // Rebuild project to include new version in compiled files
+    if (!options.skipBuild && !options.dryRun) {
+      try {
+        await execa('npm', ['run', 'build']);
+      } catch (error) {
+        progressBar.fail('Failed to rebuild with new version');
+        throw error;
+      }
+    }
+
     // Generate changelog
     progressBar.nextStep();
     try {
