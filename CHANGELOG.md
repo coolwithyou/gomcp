@@ -1,3 +1,43 @@
+## [v1.0.0] - 2025-08-05
+
+### 🎉 Major Release - Production Ready
+
+This major release marks gomcp as production-ready with comprehensive AWS support and significant architectural improvements.
+
+### ✨ Features
+
+- **AWS Ecosystem Support**: Added 10 comprehensive AWS MCP servers including:
+  - AWS Core (ore) - Central control and AI processing pipeline
+  - AWS Documentation - Official AWS docs search and markdown conversion
+  - AWS CDK - Infrastructure as code with security compliance
+  - AWS Cost Explorer - Cost analysis and optimization tools
+  - Amazon ECS - Container orchestration and deployment
+  - AWS Lambda Tool - Lambda function execution for private AWS resources
+  - Amazon RDS/Aurora - Database interaction and query capabilities
+  - S3 Tables - S3-based table management and SQL query support
+  - Amazon ElastiCache - Cache cluster management and operations
+- **Supabase Integration**: Added Supabase server for backend-as-a-service functionality
+- **Enhanced User Experience**: Rotating progress messages during MCP connection for better perceived performance
+- **AWS Development Preset**: Quick setup preset for AWS development workflows
+
+### 🔄 Breaking Changes
+
+- **Simplified Server Management**: Removed preferredScope and forceProjectScope from server interface
+- **Flexible Installation**: All servers now support both user and project scope installation
+- **Streamlined Architecture**: Removed project-only server constraints
+
+### 📚 Documentation
+
+- Updated README with curated server approach emphasizing quality over quantity
+- Added gomcp logo to all README translations (English, Spanish, Japanese, Korean, Chinese)
+- Improved server descriptions and categorization
+
+### 🧹 Maintenance
+
+- Removed dist directory from git tracking (build artifacts)
+- Updated tests to reflect simplified server management
+- Enhanced code organization and structure
+
 ## [v0.14.2] - 2025-08-04
 
 ### Documentation
