@@ -86,7 +86,8 @@ export async function checkboxPromptWithEscape<T extends Answers = Answers>(
 
   // Copy other properties that might exist but exclude the original validate
   const questionObj = question as unknown as Record<string, unknown>;
-  const modifiedObj = modifiedQuestion as unknown as Record<string, unknown>;for (const key in questionObj) {
+  const modifiedObj = modifiedQuestion as unknown as Record<string, unknown>;
+  for (const key in questionObj) {
     if (
       key !== 'validate' &&
       key !== 'type' &&
@@ -141,6 +142,162 @@ export async function checkboxPromptWithEscape<T extends Answers = Answers>(
       console.error(chalk.red('Debug: Error stack:'), error.stack);
     }
 
+    // Handle Ctrl+C
+    if (error && typeof error === 'object' && 'isTtyError' in error) {
+      process.exit(0);
+    }
+    throw error;
+  }
+}
+
+// Searchable checkbox prompt with escape handling
+export async function searchableCheckboxPromptWithEscape(
+  question: {
+    message: string;
+    choices: Array<{
+      name: string;
+      value: string;
+      disabled?: boolean | string;
+      checked?: boolean;
+    } | { type: 'separator'; separator: string }>;
+    pageSize?: number;
+  }
+): Promise<{ selectedServers: string[] } | null> {
+  try {
+    const selectedServers: string[] = [];
+    let continueSelecting = true;
+
+    // Convert choices to a flat array for searching
+    const allChoices = question.choices.filter(choice => !('type' in choice && choice.type === 'separator')) as Array<{
+      name: string;
+      value: string;
+      disabled?: boolean | string;
+      checked?: boolean;
+    }>;
+
+    // Track which servers are pre-selected
+    const preSelectedServers = allChoices
+      .filter(choice => choice.checked && !choice.disabled)
+      .map(choice => choice.value);
+    
+    selectedServers.push(...preSelectedServers);
+
+    while (continueSelecting) {
+      // First, ask if they want to search or browse
+      const actionResult = await promptWithEscape([
+        {
+          type: 'list',
+          name: 'action',
+          message: `${chalk.cyan(`Currently selected: ${selectedServers.length} server(s)`)}. What would you like to do?`,
+          choices: [
+            { name: '🔍 Search for servers by name', value: 'search' },
+            { name: '📋 Browse all servers', value: 'browse' },
+            selectedServers.length > 0 
+              ? { name: chalk.green(`✓ Done selecting (${selectedServers.length} selected)`), value: 'done' }
+              : { name: chalk.gray('✓ Done selecting (nothing selected)'), value: 'done', disabled: true },
+            new inquirer.Separator(),
+            { name: '← Back to previous menu', value: '__BACK__' }
+          ],
+        }
+      ]);
+
+      if (!actionResult || actionResult.action === '__BACK__') {
+        return null;
+      }
+
+      if (actionResult.action === 'done') {
+        break;
+      }
+
+      let choicesToShow = allChoices;
+      let searchTerm = '';
+
+      if (actionResult.action === 'search') {
+        // Get search term
+        const searchResult = await promptWithEscape([
+          {
+            type: 'input',
+            name: 'searchTerm',
+            message: 'Enter search term (partial server name):',
+            validate: (input: string) => input.trim().length > 0 || 'Please enter a search term',
+          }
+        ]);
+
+        if (!searchResult) {
+          continue;
+        }
+
+        searchTerm = searchResult.searchTerm.toLowerCase();
+        choicesToShow = allChoices.filter(choice => 
+          choice.name.toLowerCase().includes(searchTerm)
+        );
+
+        if (choicesToShow.length === 0) {
+          console.log(chalk.yellow(`\nNo servers found matching "${searchResult.searchTerm}"`));
+          await promptWithEscape([
+            {
+              type: 'confirm',
+              name: 'continue',
+              message: 'Press enter to continue',
+              default: true,
+            }
+          ]);
+          continue;
+        }
+      }
+
+      // Show filtered/all choices with current selection status
+      const displayChoices = choicesToShow.map(choice => {
+        const isSelected = selectedServers.includes(choice.value);
+        const prefix = isSelected ? chalk.green('✓ ') : '  ';
+        const suffix = choice.disabled ? '' : isSelected ? chalk.gray(' (selected)') : '';
+        
+        return {
+          name: `${prefix}${choice.name}${suffix}`,
+          value: choice.value,
+          disabled: choice.disabled,
+        };
+      });
+
+      // Add header
+      if (searchTerm) {
+        displayChoices.unshift(
+          new inquirer.Separator(chalk.yellow(`=== Search results for "${searchTerm}" ===`)) as any
+        );
+      }
+
+      // Show selection prompt
+      const selectionResult = await checkboxPromptWithEscape({
+        type: 'checkbox',
+        name: 'selected',
+        message: 'Select/deselect servers (space to toggle, enter to confirm):',
+        choices: displayChoices,
+        pageSize: question.pageSize || 20,
+      });
+
+      if (!selectionResult) {
+        continue;
+      }
+
+      // Update selected servers
+      // Remove all servers that were shown (in case they were deselected)
+      const shownServerIds = choicesToShow.map(c => c.value);
+      const newSelectedServers = selectedServers.filter(id => !shownServerIds.includes(id));
+      
+      // Add newly selected servers
+      selectionResult.selected.forEach((id: string) => {
+        if (!newSelectedServers.includes(id)) {
+          newSelectedServers.push(id);
+        }
+      });
+      
+      // Update the selectedServers array
+      selectedServers.length = 0;
+      selectedServers.push(...newSelectedServers);
+    }
+
+    return { selectedServers };
+  } catch (error) {
     // Handle Ctrl+C
     if (error && typeof error === 'object' && 'isTtyError' in error) {
       process.exit(0);

@@ -1,4 +1,4 @@
-import inquirer, { Answers } from 'inquirer';
+import { Answers } from 'inquirer';
 import chalk from 'chalk';
 import {
   createIndeterminateProgressBar
@@ -22,7 +22,7 @@ import {
 import { MCPServer, ConfigOption, ServerConfig, InstallScope } from './types.js';
 import * as os from 'os';
 import * as path from 'path';
-import { promptWithEscape, checkboxPromptWithEscape } from './utils/prompt.js';
+import { promptWithEscape, checkboxPromptWithEscape, searchableCheckboxPromptWithEscape } from './utils/prompt.js';
 import { getProjectServers } from './mcp-config.js';
 import {
   displayActivationStatus,
@@ -249,7 +249,7 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
   const categories = [...new Set(servers.map((s) => s.category))];
 
   for (const category of categories) {
-    choices.push(new inquirer.Separator(chalk.yellow(`=== ${category.toUpperCase()} ===`)));
+    choices.push({ type: 'separator' as const, separator: chalk.yellow(`=== ${category.toUpperCase()} ===`) });
 
     const categoryServers = servers.filter((s) => s.category === category);
     for (const server of categoryServers) {
@@ -295,19 +295,16 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
 
         // Add single-line description only if showDescriptions is true
         if (showDescriptions) {
-          choices.push(new inquirer.Separator(chalk.gray(`   ${server.description}`)));
+          choices.push({ type: 'separator' as const, separator: chalk.gray(`   ${server.description}`) });
         }
       }
     }
   }
 
-  const selectionResult = await checkboxPromptWithEscape({
-    type: 'checkbox',
-    name: 'selectedServers',
-    message: 'Select MCP servers to install (use space to select, enter to confirm):',
+  const selectionResult = await searchableCheckboxPromptWithEscape({
+    message: 'Select MCP servers to install (type to search, use space to select, enter to confirm):',
     choices,
     pageSize: 20,
-    // validate removed to allow back navigation
   });
 
   if (!selectionResult) {
