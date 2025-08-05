@@ -1,237 +1,113 @@
-# gomcp - Claude Code 的交互式 MCP 设置工具
-
-<div align="center">
+# gomcp
 
 ![gomcp](gomcp.png)
 
-</div>
-
-<div align="center">
-
 [English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh.md) | [Español](README.es.md)
-
-</div>
 
 [![npm version](https://badge.fury.io/js/gomcp.svg)](https://badge.fury.io/js/gomcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/node/v/gomcp.svg)](https://nodejs.org)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
 
-> 🚀 **Go MCP!** - 30秒内从零到AI超能力。选择你的工具，剩下的交给我们。
-> 
-> 🌐 **多语言支持** - 整个MCP设置过程支持中文、英语、韩语、日语和西班牙语。可随时切换语言！
->
-> 📌 **精选品质** - 我们精心挑选最有用、最通用的MCP服务器。质量重于数量。
-
-## 目录
-
-- [功能特性](#功能特性)
-- [快速开始](#快速开始)
-- [安装](#安装)
-- [使用方法](#使用方法)
-- [可用的 MCP 服务器](#可用的-mcp-服务器)
-- [预设](#预设)
-- [配置](#配置)
-- [团队协作](#团队协作)
-- [贡献指南](#贡献指南)
-- [许可证](#许可证)
-
-## 功能特性
-
-- 📦 **交互式安装**: 使用友好的复选框界面选择 MCP 服务器
-- 🎯 **智能分类**: 按类别组织的服务器（必备、开发、生产力等）
-- ⚡ **快速预设**: 一条命令安装常用服务器组合
-- 🔧 **自动配置**: 为需要 API 密钥或设置的服务器提供引导设置
-- ✅ **验证**: 检查已安装 MCP 服务器的状态
-- 💾 **备份/恢复**: 保存和恢复你的 MCP 配置
-- 🌍 **多作用域支持**: 全局或按项目安装
-- 🔄 **更新管理**: 保持你的 MCP 服务器最新
+为 Claude Code 轻松设置 MCP 服务器的工具。选择你需要的工具，安装和配置都交给我们。
 
 ## 快速开始
 
 ```bash
-# 使用 npx 直接运行（推荐）
+# 直接运行这个：
 npx gomcp
 
-# 或全局安装
+# 或者全局安装：
 npm install -g gomcp
 gomcp
 ```
+
+就这样！交互式菜单会引导你完成所有操作。
+
+## 这是什么？
+
+如果你在用 Claude Code，你可能想要连接各种工具（叫做 MCP 服务器）——比如 GitHub、文件系统、数据库等等。手动设置这些东西有点麻烦。这个工具让一切变得简单。
+
+## 功能
+
+- 交互式菜单，选择你想要的服务器
+- 自动处理所有安装和配置
+- 支持全局和项目级安装
+- 备份和恢复配置
+- 支持 npm、yarn、pnpm
 
 ## 安装
 
-### 使用 npm
+不需要安装。直接运行：
+```bash
+npx gomcp
+```
 
+如果想全局安装：
 ```bash
 npm install -g gomcp
+# 或 yarn global add gomcp
+# 或 pnpm add -g gomcp
 ```
 
-### 使用 yarn
-
-```bash
-yarn global add gomcp
-```
-
-### 使用 pnpm
-
-```bash
-pnpm add -g gomcp
-```
-
-### 系统要求
-
-- Node.js >= 16.0.0
-- Claude Code 已安装并可在 PATH 中访问
-- Git（某些 MCP 服务器需要）
+需要的东西：Node.js 16 以上，Claude Code 已安装。
 
 ## 使用方法
 
-### 交互模式
+### 交互模式（推荐）
 
-只需运行 `gomcp` 即可启动交互式菜单：
-
+直接运行：
 ```bash
 gomcp
 ```
 
-你将看到一个包含以下选项的菜单：
-- 🆕 安装新服务器（含作用域选择）
-- 🔄 更新现有服务器
-- ✅ 验证安装
-- 💾 备份/恢复配置
-- 📋 列出可用服务器
-- 🌐 更改语言
-
-### 备份和恢复
-
-gomcp 提供灵活的备份和恢复选项：
-
-**备份选项：**
-- 👤 **仅用户配置** - 备份全局 MCP 设置（~/.claude/config.json）
-- 📁 **仅项目配置** - 备份项目特定设置（.mcp.json）
-- 💾 **所有配置** - 备份用户和项目设置
+你会看到一个菜单，可以：
+- 安装新服务器
+- 更新现有服务器
+- 验证安装了什么
+- 备份/恢复配置
+- 更改语言（支持中文、英语、韩语、日语、西班牙语）
 
 ### 命令行选项
 
+如果你知道自己想要什么：
 ```bash
-# 使用不同作用域安装
-gomcp                       # 交互模式（询问作用域）
-gomcp --scope user          # 全局安装（默认）
-gomcp --scope project       # 仅为当前项目安装
+# 安装预设
+gomcp --preset recommended  # 基础套装开始
+gomcp --preset dev         # 完整开发环境
+gomcp --preset data        # 数据分析工具
 
-# 安装预设集合
-gomcp --preset recommended  # GitHub、File System、Sequential Thinking
-gomcp --preset dev          # 开发工具预设
-gomcp --preset data         # 数据分析预设
-
-# 列出所有可用服务器
-gomcp --list
-
-# 验证已安装的服务器
-gomcp --verify
-
-# 显示版本
-gomcp --version
-
-# 显示帮助
-gomcp --help
+# 其他有用的命令
+gomcp --list               # 查看所有可用服务器
+gomcp --verify             # 检查安装了什么
+gomcp --scope project      # 只为当前项目安装
 ```
 
-### 安装作用域
+### 安装范围
 
-#### 用户（全局）
-- 服务器在所有项目中可用
-- 使用 `--scope user` 或在交互模式中选择 "User"
-- 默认作用域
-- 配置位置：`~/.claude/config.json`
-- 推荐用于：通用工具（GitHub、File System、Context7）
+**用户（全局）** - 默认选项。服务器在所有项目中都可以用。
 
-#### 项目
-- 服务器仅在当前项目中可用
-- 使用 `--scope project` 或在交互模式中选择 "Project"
-- 创建 `.mcp.json`（用于团队共享）并在 Claude Code 中激活
-- 配置位置：`./.mcp.json`（项目根目录）
-- 推荐用于：项目特定工具（Serena、Memory Bank、数据库连接）
+**项目** - 只在当前项目中。适合团队协作，因为会创建 `.mcp.json` 文件可以提交。团队成员克隆仓库后，Claude Code 会要求他们批准这些服务器。
 
-## 可用的 MCP 服务器
+## 可用的服务器
 
-### 必备
-- 🐙 **GitHub** - 连接到 GitHub API 处理议题、PR 和 CI/CD
-- 📁 **File System** - 读写机器上的文件
-- 📚 **Context7** - 访问库的最新文档和代码示例
-- 🧠 **Sequential Thinking** - 将复杂任务分解为逻辑步骤
+我们按类别整理了 MCP 服务器。这里介绍一些受欢迎的：
 
-### 开发
-- 🐘 **PostgreSQL** - 使用自然语言查询 PostgreSQL 数据库
-- 🌐 **Puppeteer** - Web 浏览器自动化和测试
-- 🎭 **Playwright** - 使用可访问性树的跨浏览器自动化
-- 🐳 **Docker** - 管理容器、镜像和 Docker 工作流
-- 🛠️ **Serena** - 具有语义检索和编辑功能的强大编码代理工具包
-- 🔧 **Browser Tools** - 监控浏览器日志和自动化浏览器任务
-- 🌐 **Chrome** - 使用20多个工具控制 Chrome 浏览器
-- 🎨 **Figma** - 设计到代码的工作流集成
-- 🍃 **Supabase** - 管理 Supabase 数据库和身份验证
+**必备工具**
+- GitHub - 处理仓库、议题、PR
+- File System - 读写本地文件
+- Context7 - 获取任何库的文档
+- Sequential Thinking - 分解复杂任务
+- Serena - 智能代码编辑助手
 
-### 生产力
-- 💬 **Slack** - 团队通信的 Slack 集成
-- 📝 **Notion** - 访问和管理 Notion 工作区
-- 💾 **Memory Bank** - Claude 会话间的持久内存
-- 📧 **Email** - 发送邮件和管理附件
-- 📊 **Google Suite** - 访问 Google Docs、Sheets 和 Drive
-- 📈 **Excel** - 创建和修改 Excel 文件
+**开发**
+- PostgreSQL、Docker、Puppeteer、Supabase
 
-### 数据与分析
-- 📊 **Jupyter** - 在 Jupyter 笔记本中执行代码
-- 🔬 **Everything Search** - 跨操作系统的快速文件搜索
-- 🌍 **EVM** - 面向30多个EVM网络的综合区块链服务
-- 🔑 **Redis** - 数据库操作和缓存微服务
+**生产力**
+- Slack、Notion、Memory（知识图谱）
 
-### 搜索与Web
-- 🦆 **DuckDuckGo** - 无需 API 密钥的隐私优先 Web 搜索
-- 🦁 **Brave Search** - 使用 API 的隐私优先 Web 搜索
-- 📸 **Screenshot** - 使用高级功能捕获网站截图
+**AWS 工具**
+- 从 CDK 到 Lambda、RDS 各种工具
 
-### 自动化与集成
-- ⚡ **Zapier** - 跨5000多个应用自动化工作流
-- 💳 **Stripe** - 集成 Stripe 支付 API
-- 🎥 **YouTube** - 提取 YouTube 视频元数据和字幕
-- 🔌 **Discord** - Discord 服务器的机器人自动化
-
-### AI与机器学习
-- 🤖 **Replicate** - 搜索、运行和管理机器学习模型
-- 🧠 **Hyperbolic** - 与 Hyperbolic GPU 云服务交互
-- 📈 **Databricks** - Databricks 的 SQL 查询和作业管理
-
-### DevOps与基础设施
-- ☸️ **Kubernetes (mcp-k8s-go)** - 浏览 Kubernetes pods、日志、事件和命名空间
-- 📊 **HAProxy** - 管理和监控 HAProxy 配置
-- 🌐 **Netbird** - 分析 Netbird 网络对等体、组和策略
-- 🔥 **OPNSense** - OPNSense 防火墙管理和 API 访问
-
-### 域名与安全
-- 🔍 **Domain Tools** - 使用 WHOIS 和 DNS 进行综合域名分析
-- 📡 **Splunk** - 访问 Splunk 保存的搜索、警报和索引
-
-### 区块链与加密货币
-- 🟣 **Solana Agent Kit** - 与 Solana 区块链交互（40多个协议操作）
-- ⚡ **EVM** - 多链 EVM 区块链集成
-
-### 求职与职业
-- 💼 **Reed Jobs** - 从 Reed.co.uk 搜索和检索职位列表
-
-### 时间与实用工具
-- ⏰ **Time** - 获取当前时间并在时区间转换
-- 🔧 **Everything** - 具有综合功能的快速文件搜索
-
-### 元工具
-- 🛠️ **MCP Compass** - 为特定需求建议合适的 MCP 服务器
-- 🏗️ **MCP Server Creator** - 动态生成其他 MCP 服务器
-- 📦 **MCP Installer** - 安装其他 MCP 服务器
-- 🔄 **MCP Proxy** - 聚合多个 MCP 资源服务器
-
-### 还有更多服务器...
-
-运行 `gomcp --list` 查看所有可用服务器及说明。
+...还有很多。运行 `gomcp --list` 查看完整列表。
 
 ## 预设
 

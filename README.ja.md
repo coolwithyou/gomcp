@@ -1,339 +1,183 @@
-# gomcp - Claude Code用インタラクティブMCPセットアップツール
-
-<div align="center">
+# gomcp
 
 ![gomcp](gomcp.png)
 
-</div>
-
-<div align="center">
-
 [English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh.md) | [Español](README.es.md)
-
-</div>
 
 [![npm version](https://badge.fury.io/js/gomcp.svg)](https://badge.fury.io/js/gomcp)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Node.js Version](https://img.shields.io/node/v/gomcp.svg)](https://nodejs.org)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat)](http://makeapullrequest.com)
 
-> 🚀 **Go MCP!** - ゼロから30秒でAIスーパーパワーへ。ツールを選ぶだけ、あとはお任せください。
-> 
-> 🌐 **多言語サポート** - MCPセットアップの全プロセスを日本語、英語、韓国語、中国語、スペイン語で利用可能。いつでも言語を変更できます！
->
-> 📌 **厳選された品質** - 最も有用で多機能なMCPサーバーのみを慎重に選択しています。量より質を重視。
-
-## 目次
-
-- [機能](#機能)
-- [クイックスタート](#クイックスタート)
-- [インストール](#インストール)
-- [使用方法](#使用方法)
-- [利用可能なMCPサーバー](#利用可能なmcpサーバー)
-- [プリセット](#プリセット)
-- [設定](#設定)
-- [チームコラボレーション](#チームコラボレーション)
-- [コントリビューション](#コントリビューション)
-- [ライセンス](#ライセンス)
-
-## 機能
-
-- 📦 **インタラクティブインストール**: ユーザーフレンドリーなチェックボックスインターフェースでMCPサーバーを選択
-- 🎯 **スマートな分類**: カテゴリー別に整理されたサーバー（必須、開発、生産性など）
-- ⚡ **クイックプリセット**: 一つのコマンドで一般的なサーバーの組み合わせをインストール
-- 🔧 **自動設定**: APIキーや設定が必要なサーバーのためのガイド付きセットアップ
-- ✅ **検証**: インストールされたMCPサーバーのステータス確認
-- 💾 **バックアップ/復元**: MCP設定の保存と復元
-- 🌍 **マルチスコープサポート**: グローバルまたはプロジェクト単位でインストール
-- 🔄 **アップデート管理**: MCPサーバーを最新の状態に保つ
+Claude Code用のMCPサーバーを簡単にセットアップできるツールです。必要なツールを選ぶだけで、インストールと設定は全部お任せ。
 
 ## クイックスタート
 
 ```bash
-# npxで直接実行（推奨）
+# これだけ実行すれば大丈夫：
 npx gomcp
 
-# またはグローバルインストール
+# グローバルにインストールしたい場合：
 npm install -g gomcp
 gomcp
 ```
+
+これで完了！対話型メニューが全てガイドしてくれます。
+
+## これは何？
+
+Claude Codeを使っているなら、きっと色々なツール（MCPサーバーと呼ばれるもの）を接続したいと思うでしょう。GitHub、ファイルシステム、データベースなどです。手動でセットアップするのはちょっと面倒。このツールがそれを簡単にします。
+
+## 機能
+
+- 欲しいサーバーを選べる対話型メニュー
+- インストールと設定を全て自動処理
+- グローバルとプロジェクト単位の両方のインストールに対応
+- 設定のバックアップと復元
+- npm、yarn、pnpmに対応
 
 ## インストール
 
-### npmを使用
+インストールは必要ありません。ただこれを実行：
+```bash
+npx gomcp
+```
 
+グローバルにインストールしたいなら：
 ```bash
 npm install -g gomcp
+# または yarn global add gomcp
+# または pnpm add -g gomcp
 ```
 
-### yarnを使用
+必要なもの：Node.js 16以上、Claude Codeがインストール済み。
 
-```bash
-yarn global add gomcp
-```
+## 使い方
 
-### pnpmを使用
+### 対話型モード（おすすめ）
 
-```bash
-pnpm add -g gomcp
-```
-
-### 必要条件
-
-- Node.js >= 16.0.0
-- Claude CodeがインストールされPATHでアクセス可能であること
-- Git（一部のMCPサーバーで必要）
-
-## 使用方法
-
-### インタラクティブモード
-
-`gomcp`を実行するだけでインタラクティブメニューが開始されます：
-
+ただ実行するだけ：
 ```bash
 gomcp
 ```
 
-以下のオプションを含むメニューが表示されます：
-- 🆕 新しいサーバーをインストール（スコープ選択付き）
-- 🔄 既存のサーバーを更新
-- ✅ インストールを検証
-- 💾 設定のバックアップ/復元
-- 📋 利用可能なサーバーの一覧
-- 🌐 言語を変更
-
-### バックアップと復元
-
-gomcpは柔軟なバックアップと復元オプションを提供します：
-
-**バックアップオプション：**
-- 👤 **ユーザー設定のみ** - グローバルMCP設定をバックアップ（~/.claude/config.json）
-- 📁 **プロジェクト設定のみ** - プロジェクト固有の設定をバックアップ（.mcp.json）
-- 💾 **すべての設定** - ユーザーとプロジェクトの両方の設定をバックアップ
+メニューでこんなことができます：
+- 新しいサーバーをインストール
+- 既存サーバーを更新
+- インストール済みを確認
+- 設定をバックアップ/復元
+- 言語を変更（日本語、英語、韓国語、中国語、スペイン語に対応）
 
 ### コマンドラインオプション
 
+何が欲しいか分かっているなら：
 ```bash
-# 異なるスコープでインストール
-gomcp                       # インタラクティブモード（スコープを尋ねる）
-gomcp --scope user          # グローバルインストール（デフォルト）
-gomcp --scope project       # 現在のプロジェクトのみ
+# プリセットをインストール
+gomcp --preset recommended  # 基本セットでスタート
+gomcp --preset dev         # 開発環境一式
+gomcp --preset data        # データ分析用
 
-# プリセットコレクションをインストール
-gomcp --preset recommended  # GitHub、File System、Sequential Thinking
-gomcp --preset dev          # 開発ツールプリセット
-gomcp --preset data         # データ分析プリセット
-
-# すべての利用可能なサーバーを一覧表示
-gomcp --list
-
-# インストールされたサーバーを検証
-gomcp --verify
-
-# バージョンを表示
-gomcp --version
-
-# ヘルプを表示
-gomcp --help
+# その他便利なコマンド
+gomcp --list               # 全サーバーを表示
+gomcp --verify             # 何がインストール済みか確認
+gomcp --scope project      # 現在のプロジェクトのみにインストール
 ```
 
-### インストールスコープ
+### インストール範囲
 
-#### ユーザー（グローバル）
-- すべてのプロジェクトでサーバーが利用可能
-- `--scope user`を使用するか、インタラクティブモードで「User」を選択
-- デフォルトのスコープ
-- 設定場所：`~/.claude/config.json`
-- 推奨：汎用ツール（GitHub、File System、Context7）
+**ユーザー（グローバル）** - デフォルト。全プロジェクトでサーバーが動作します。
 
-#### プロジェクト
-- 現在のプロジェクトでのみサーバーが利用可能
-- `--scope project`を使用するか、インタラクティブモードで「Project」を選択
-- `.mcp.json`を作成（チーム共有用）しClaude Codeで有効化
-- 設定場所：`./.mcp.json`（プロジェクトルート）
-- 推奨：プロジェクト固有のツール（Serena、Memory Bank、データベース接続）
+**プロジェクト** - 現在のプロジェクトのみ。チームコラボに便利で、`.mcp.json`ファイルが作成されてコミットできます。チームメンバーがリポジトリをクローンすると、Claude Codeがサーバーの承認を求めます。
 
-## 利用可能なMCPサーバー
+## 利用可能なサーバー
 
-### 必須
-- 🐙 **GitHub** - イシュー、PR、CI/CDのためのGitHub API接続
-- 📁 **File System** - マシン上のファイルの読み書き
-- 📚 **Context7** - ライブラリの最新ドキュメントとコード例へのアクセス
-- 🧠 **Sequential Thinking** - 複雑なタスクを論理的なステップに分解
+カテゴリー別に整理されたMCPサーバーがあります。人気のものをいくつか紹介：
 
-### 開発
-- 🐘 **PostgreSQL** - 自然言語でPostgreSQLデータベースをクエリ
-- 🌐 **Puppeteer** - Webブラウザの自動化とテスト
-- 🎭 **Playwright** - アクセシビリティツリーを使用したクロスブラウザ自動化
-- 🐳 **Docker** - コンテナ、イメージ、Dockerワークフローの管理
-- 🛠️ **Serena** - セマンティック検索と編集機能を持つ強力なコーディングエージェントツールキット
-- 🔧 **Browser Tools** - ブラウザログの監視とブラウザタスクの自動化
-- 🌐 **Chrome** - 20以上のツールでChromeブラウザを制御
-- 🎨 **Figma** - デザインからコードへのワークフロー統合
-- 🍃 **Supabase** - Supabaseデータベースと認証の管理
+**必須ツール**
+- GitHub - リポジトリ、イシュー、PR作業
+- File System - ローカルファイルの読み書き
+- Context7 - あらゆるライブラリのドキュメント取得
+- Sequential Thinking - 複雑なタスクを分解
+- Serena - スマートなコード編集アシスタント
 
-### 生産性
-- 💬 **Slack** - チームコミュニケーションのためのSlack統合
-- 📝 **Notion** - Notionワークスペースへのアクセスと管理
-- 💾 **Memory Bank** - Claudeセッション間の永続的なメモリ
-- 📧 **Email** - メールの送信と添付ファイルの管理
-- 📊 **Google Suite** - Google Docs、Sheets、Driveへのアクセス
-- 📈 **Excel** - Excelファイルの作成と変更
+**開発**
+- PostgreSQL、Docker、Puppeteer、Supabase
 
-### データ＆分析
-- 📊 **Jupyter** - Jupyterノートブックでのコード実行
-- 🔬 **Everything Search** - オペレーティングシステム全体での高速ファイル検索
-- 🌍 **EVM** - 30以上のEVMネットワークの包括的なブロックチェーンサービス
-- 🔑 **Redis** - データベース操作とキャッシングマイクロサービス
+**生産性**
+- Slack、Notion、Memory（知識グラフ）
 
-### 検索＆Web
-- 🦆 **DuckDuckGo** - APIキー不要のプライバシー重視Web検索
-- 🦁 **Brave Search** - APIを使用したプライバシー重視Web検索
-- 📸 **Screenshot** - 高度な機能でWebサイトのスクリーンショットをキャプチャ
+**AWSツール**
+- CDKからLambda、RDSまで多様なツール
 
-### 自動化＆統合
-- ⚡ **Zapier** - 5,000以上のアプリでワークフローを自動化
-- 💳 **Stripe** - Stripe決済APIとの統合
-- 🎥 **YouTube** - YouTubeビデオのメタデータとトランスクリプトを抽出
-- 🔌 **Discord** - Discordサーバー用のボット自動化
-
-### AI＆ML
-- 🤖 **Replicate** - 機械学習モデルの検索、実行、管理
-- 🧠 **Hyperbolic** - HyperbolicのGPUクラウドサービスとの相互作用
-- 📈 **Databricks** - DatabricksのSQLクエリとジョブ管理
-
-### DevOps＆インフラ
-- ☸️ **Kubernetes (mcp-k8s-go)** - Kubernetesポッド、ログ、イベント、ネームスペースの閲覧
-- 📊 **HAProxy** - HAProxy設定の管理と監視
-- 🌐 **Netbird** - Netbirdネットワークピア、グループ、ポリシーの分析
-- 🔥 **OPNSense** - OPNSenseファイアウォール管理とAPIアクセス
-
-### ドメイン＆セキュリティ
-- 🔍 **Domain Tools** - WHOISとDNSによる包括的なドメイン分析
-- 📡 **Splunk** - Splunk保存検索、アラート、インデックスへのアクセス
-
-### ブロックチェーン＆暗号通貨
-- 🟣 **Solana Agent Kit** - Solanaブロックチェーンとの相互作用（40以上のプロトコルアクション）
-- ⚡ **EVM** - マルチチェーンEVMブロックチェーン統合
-
-### 求人＆キャリア
-- 💼 **Reed Jobs** - Reed.co.ukから求人リストを検索・取得
-
-### 時間＆ユーティリティ
-- ⏰ **Time** - 現在時刻の取得とタイムゾーン間の変換
-- 🔧 **Everything** - 包括的な機能での高速ファイル検索
-
-### メタツール
-- 🛠️ **MCP Compass** - 特定のニーズに適切なMCPサーバーを提案
-- 🏗️ **MCP Server Creator** - 他のMCPサーバーを動的に生成
-- 📦 **MCP Installer** - 他のMCPサーバーをインストール
-- 🔄 **MCP Proxy** - 複数のMCPリソースサーバーを集約
-
-### さらに多くのサーバー...
-
-すべてのサーバーと説明を見るには`gomcp --list`を実行してください。
+...他にもたくさんあります。`gomcp --list`で全リストを確認してください。
 
 ## プリセット
 
-一般的なサーバーの組み合わせの迅速なインストール：
+サーバーを一つ一つ選ぶのが面倒？プリセットがあります：
 
-| プリセット      | 含まれるサーバー                                   | 使用ケース                       |
-| -------------- | -------------------------------------------------- | -------------------------------- |
-| `recommended`  | GitHub、File System、Sequential Thinking、Context7 | 必須ツールで始める               |
-| `dev`          | すべての推奨 + PostgreSQL、Docker、Puppeteer       | 完全な開発環境                   |
-| `data`         | Jupyter、Excel、SciPy、PostgreSQL                  | データ分析と可視化               |
-| `web`          | Puppeteer、File System、GitHub                     | Web開発と自動化                  |
-| `productivity` | Slack、Notion、Memory Bank、Email                  | チームコラボレーション           |
+- `recommended` - 基本セットで始める
+- `dev` - 完全な開発設定
+- `data` - データ分析用
+- `web` - Web開発ツール
+- `productivity` - チームコラボ
+- `aws` - AWS開発
 
 ## 設定
 
-### サーバー設定
+サーバーにAPIキーや設定が必要な場合、インストール中に聞いてきます。例えばGitHubはパーソナルアクセストークンを要求します。
 
-設定が必要なサーバー（APIキー、トークンなど）をインストールする際、gomcpがセットアッププロセスをガイドします：
+File Systemサーバーの場合、Claudeがアクセスできるディレクトリを選びます。簡単です。
 
+設定ファイルの場所：
+- `~/.claude/config.json`（ユーザー設定）
+- `./.mcp.json`（プロジェクト設定）
+
+## チームコラボ
+
+チームで作業していますか？プロジェクトスコープを使いましょう：
+
+1. サーバーをインストール：`gomcp --scope project`
+2. `.mcp.json`ファイルをコミット
+3. チームメンバーがリポジトリをクローンして`claude`を実行すると、サーバー承認のリクエストが来る
+
+これで完了！みんな同じ設定を使えます。
+
+## 開発
+
+コントリビュートしたいですか？
+
+```bash
+git clone https://github.com/coolwithyou/gomcp.git
+cd gomcp
+npm install
+npm run build
+npm test
 ```
-📝 GitHubを設定：
-? GitHub Personal Access Token: **********************
-? デフォルトリポジトリ（オプション）: owner/repo
-```
 
-### ファイルシステムアクセス
-
-File Systemサーバーの場合、Claudeがアクセスできるディレクトリを選択できます：
-
-```
-? アクセスを許可するディレクトリを選択: 
-❯◉ ~/Documents
- ◉ ~/Projects
- ◯ ~/Desktop
- ◯ ~/Downloads
- ◯ カスタムパス...
-```
-
-## チームコラボレーション
-
-チームで作業する際、プロジェクトスコープのMCPサーバーによりシームレスなコラボレーションが可能になります：
-
-### プロジェクトサーバーのセットアップ
-
-1. **プロジェクトスコープでサーバーをインストール：**
-   ```bash
-   gomcp --scope project
-   # またはインタラクティブモードで「Project」を選択
-   ```
-
-2. **`.mcp.json`ファイルをコミット：**
-   ```bash
-   git add .mcp.json
-   git commit -m "Add project MCP servers configuration"
-   ```
-
-### チームメンバー向け
-
-`.mcp.json`を含むプロジェクトをクローンする場合：
-
-1. **リポジトリをクローン：**
-   ```bash
-   git clone <repository-url>
-   cd <project-directory>
-   ```
-
-2. **Claude Codeを起動：**
-   ```bash
-   claude
-   ```
-
-3. **プロジェクトサーバーを承認：**
-   - Claude Codeがプロジェクトのサーバーを承認するよう求めます
-   - サーバーを確認し、期待通りであれば承認
-   - `/mcp`を使用してサーバーが接続されていることを確認
+コードはかなり簡潔です - TypeScriptで書かれていて、UIはInquirerを使っていて、標準的なnpmの慣習に従っています。
 
 ## コントリビューション
 
-コントリビューションを歓迎します！詳細は[コントリビューションガイド](CONTRIBUTING.md)をご覧ください。
+自由にコントリビュートしてください！フォークして、変更を加えて、PRを送ってください。コントリビューションについてはそんなに厳しくありません - テストが通ればOKです。
 
-### クイックスタート
+## FAQ
 
-1. リポジトリをフォーク
-2. 機能ブランチを作成（`git checkout -b feature/amazing-feature`）
-3. 変更をコミット（`git commit -m 'Add some amazing feature'`）
-4. ブランチにプッシュ（`git push origin feature/amazing-feature`）
-5. Pull Requestを作成
+**MCPって何？**  
+Claude Codeが外部ツールと接続できるようにするプロトコルです。
+
+**gomcpをアップデートするには？**  
+`npm update -g gomcp`
+
+**Claude Codeなしで使える？**  
+いいえ、Claude Code専用です。
+
+**サーバーを削除するには？**  
+gomcpを実行、「既存サーバーを更新」へ行って、不要なもののチェックを外す。
 
 ## ライセンス
 
-このプロジェクトはMITライセンスの下でライセンスされています - 詳細は[LICENSE](LICENSE)ファイルをご覧ください。
+MIT - 好きに使ってください。
 
 ---
 
-<p align="center">
-  Claude Codeコミュニティのために❤️を込めて作りました
-</p>
+MCPを作ってくれたClaude Codeチームと、様々なMCPサーバーにコントリビュートしたみなさんに感謝します。みんなすごいです。
 
-<p align="center">
-  <a href="https://github.com/coolwithyou/gomcp/issues/new?assignees=&labels=bug&template=bug_report.md&title=">バグ報告</a>
-  ·
-  <a href="https://github.com/coolwithyou/gomcp/issues/new?assignees=&labels=enhancement&template=feature_request.md&title=">機能リクエスト</a>
-  ·
-  <a href="https://github.com/coolwithyou/gomcp/discussions">ディスカッションに参加</a>
-</p>
+[バグ報告](https://github.com/coolwithyou/gomcp/issues) | [機能リクエスト](https://github.com/coolwithyou/gomcp/issues) | [ディスカッション](https://github.com/coolwithyou/gomcp/discussions)
