@@ -107,9 +107,22 @@ async function getInstalledServersByScope() {
     catch (error) {
     }
     try {
-        progressBar.updateLabel('Connecting to Claude MCP...');
+        const messages = [
+            'Connecting to Claude MCP...',
+            'Checking your installed servers...',
+            'Retrieving server configurations...',
+            'Almost there, finalizing the server list...',
+            'Setting up your MCP environment...'
+        ];
+        let messageIndex = 0;
+        progressBar.updateLabel(messages[0]);
+        const messageInterval = setInterval(() => {
+            messageIndex = (messageIndex + 1) % messages.length;
+            progressBar.updateLabel(messages[messageIndex]);
+        }, 2500);
         const { execa } = await import('execa');
         const { stdout } = await execa('claude', ['mcp', 'list']);
+        clearInterval(messageInterval);
         progressBar.updateLabel('Parsing installed servers...');
         const lines = stdout.split('\n');
         for (const line of lines) {
@@ -183,18 +196,8 @@ async function installFlow(defaultScope = 'user', showDescriptions) {
                 const otherScopeNote = isInstalledInOtherScope
                     ? chalk.blue(` (installed in ${scope === 'user' ? 'project' : 'user'})`)
                     : '';
-                let scopeIndicator = '';
-                if (server.forceProjectScope) {
-                    scopeIndicator = chalk.red(' 🔒 Project-only');
-                }
-                else if (server.preferredScope === 'project') {
-                    scopeIndicator = chalk.yellow(' 📁 Prefers project');
-                }
-                else if (server.preferredScope === 'user') {
-                    scopeIndicator = chalk.cyan(' 👤 Prefers user');
-                }
                 choices.push({
-                    name: `${icon} ${server.name}${recommended}${scopeIndicator}${requiresConfig}${otherScopeNote}`,
+                    name: `${icon} ${server.name}${recommended}${requiresConfig}${otherScopeNote}`,
                     value: server.id,
                     checked: server.recommended && !isInstalledInOtherScope,
                 });
