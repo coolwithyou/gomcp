@@ -1,6 +1,6 @@
 {
   "name": "gomcp",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "type": "module",
   "description": "🚀 The easiest way to supercharge Claude Code with 30+ MCP servers - just run 'npx gomcp' and pick your tools!",
   "main": "dist/index.js",
