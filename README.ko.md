@@ -2,7 +2,13 @@
 
 <div align="center">
 
-[English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh.md)
+![gomcp](gomcp.png)
+
+</div>
+
+<div align="center">
+
+[English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh.md) | [Español](README.es.md)
 
 </div>
 
@@ -14,6 +20,8 @@
 > 🚀 **고 MCP!** - 30초 만에 제로에서 AI 슈퍼파워로. 도구를 선택하세요, 나머지는 저희가 처리합니다.
 > 
 > 🌐 **다국어 지원** - 전체 MCP 설정 과정을 한국어, 영어, 일본어, 중국어, 스페인어로 지원합니다. 언제든지 언어를 변경할 수 있습니다!
+>
+> 📌 **엄선된 품질** - 가장 유용하고 다재다능한 MCP 서버만을 신중하게 선택합니다. 양보다 질을 추구합니다.
 
 ## 목차
 

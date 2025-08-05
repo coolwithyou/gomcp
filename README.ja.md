@@ -2,7 +2,13 @@
 
 <div align="center">
 
-[English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh.md)
+![gomcp](gomcp.png)
+
+</div>
+
+<div align="center">
+
+[English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh.md) | [Español](README.es.md)
 
 </div>
 
@@ -14,6 +20,8 @@
 > 🚀 **Go MCP!** - ゼロから30秒でAIスーパーパワーへ。ツールを選ぶだけ、あとはお任せください。
 > 
 > 🌐 **多言語サポート** - MCPセットアップの全プロセスを日本語、英語、韓国語、中国語、スペイン語で利用可能。いつでも言語を変更できます！
+>
+> 📌 **厳選された品質** - 最も有用で多機能なMCPサーバーのみを慎重に選択しています。量より質を重視。
 
 ## 目次
 

@@ -240,6 +240,7 @@ gomcp provides a carefully curated selection of high-quality MCP servers. We pri
 - 🐘 **PostgreSQL** - Query PostgreSQL databases with natural language
 - 🌐 **Puppeteer** - Browser automation and web scraping
 - 🐳 **Docker** - Manage containers, images, and Docker workflows
+- ⚡ **Supabase** - Backend-as-a-service with database and auth
 
 ### Productivity
 - 💬 **Slack** - Send messages and manage Slack workspaces
@@ -253,6 +254,18 @@ gomcp provides a carefully curated selection of high-quality MCP servers. We pri
 ### Utilities
 - ⏰ **Time** - Get current time and timezone info
 
+### AWS
+- 🎯 **Core (AWS)** - Central control and recommendation for AWS MCP servers
+- 📖 **AWS Documentation** - AWS official documentation search and markdown conversion
+- 🏗️ **AWS CDK** - AWS CDK code generation with security best practices
+- 💰 **AWS Cost Explorer** - Cost analysis and optimization tools
+- 🚢 **Amazon ECS** - Container orchestration and deployment
+- ⚡ **AWS Lambda Tool** - Execute Lambda functions for private resource access
+- 🗄️ **Amazon RDS/Aurora** - Database interaction and query capabilities
+- 📊 **S3 Tables** - S3-based table management and SQL queries
+- 🚀 **ElastiCache** - Redis and Memcached cluster management
+- 💵 **AWS Pricing** - Real-time pricing and cost forecasting
+
 Run `gomcp --list` to see all available servers with descriptions.
 
 ## Presets
@@ -265,7 +278,8 @@ Quick installation of common server combinations:
 | `dev`          | All recommended + PostgreSQL, Docker, Puppeteer    | Full development environment         |
 | `data`         | Jupyter, PostgreSQL, DuckDuckGo                    | Data analysis and research           |
 | `web`          | Puppeteer, File System, GitHub                     | Web development and automation       |
-| `productivity` | Slack, Notion, Memory                              | Team collaboration                   | Team collaboration                   |
+| `productivity` | Slack, Notion, Memory                              | Team collaboration                   |
+| `aws`          | Core, AWS Docs, CDK, ECS, Lambda Tool              | AWS cloud development                |
 
 ## Configuration
 

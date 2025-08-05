@@ -29,6 +29,7 @@ describe('Servers', () => {
           'jobs',
           'utilities',
           'meta',
+          'aws',
         ]).toContain(server.category);
 
         // 설정이 필요한 서버는 configOptions가 있어야 함
