@@ -17,20 +17,19 @@ export interface MCPServer {
     | 'blockchain'
     | 'jobs'
     | 'utilities'
-    | 'meta';
+    | 'meta'
+    | 'aws';
   package: string;
   command?: string;
   args?: string[];
   requiresConfig: boolean;
   configOptions?: ConfigOption[];
   recommended?: boolean;
-  preferredScope?: 'user' | 'project' | 'both';
-  forceProjectScope?: boolean;
 }
 
 export interface ConfigOption {
   key: string;
-  type: 'text' | 'password' | 'path' | 'paths' | 'boolean' | 'select';
+  type: 'text' | 'password' | 'path' | 'paths' | 'boolean' | 'select' | 'string';
   label: string;
   description?: string;
   required: boolean;

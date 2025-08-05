@@ -2,7 +2,13 @@
 
 <div align="center">
 
-[English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh.md)
+![gomcp](gomcp.png)
+
+</div>
+
+<div align="center">
+
+[English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh.md) | [Español](README.es.md)
 
 </div>
 
@@ -14,6 +20,8 @@
 > 🚀 **Go MCP!** - 30秒内从零到AI超能力。选择你的工具，剩下的交给我们。
 > 
 > 🌐 **多语言支持** - 整个MCP设置过程支持中文、英语、韩语、日语和西班牙语。可随时切换语言！
+>
+> 📌 **精选品质** - 我们精心挑选最有用、最通用的MCP服务器。质量重于数量。
 
 ## 目录
 

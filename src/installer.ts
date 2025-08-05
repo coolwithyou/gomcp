@@ -15,7 +15,7 @@ export async function installServers(
   serverIds: string[],
   configs: Map<string, ServerConfig>,
   scope: InstallScope = 'user',
-  force: boolean = false
+  _force: boolean = false
 ): Promise<void> {
   console.log(chalk.bold(`\n🚀 ${t('server.installing')}\n`));
 
@@ -28,36 +28,7 @@ export async function installServers(
       continue;
     }
 
-    // Check forceProjectScope
-    if (server.forceProjectScope && scope === 'user') {
-      console.error(chalk.red(`\n⛔ ${t('installation.projectOnlyServer', { serverName: server.name })}`));
-      const explanationLines = t('installation.projectOnlyExplanation').split('\n');
-      explanationLines.forEach(line => console.error(chalk.gray(`   ${line}`)));
-      console.error('');
-      results.push({
-        server,
-        success: false,
-        error: 'Project-only server cannot be installed at user level',
-      });
-      continue;
-    }
 
-    // Check preferredScope
-    if (server.preferredScope && scope !== server.preferredScope && !force) {
-      console.log(
-        chalk.yellow(
-          `\n⚠️  ${server.name} is recommended for ${server.preferredScope} level installation.`
-        )
-      );
-      console.log(chalk.gray(getWarningMessage(server, scope)));
-      console.log(chalk.gray(`   ${t('server.forceInstallWarning', { scope })}\n`));
-      results.push({
-        server,
-        success: false,
-        error: `Recommended for ${server.preferredScope} level (use --force to override)`,
-      });
-      continue;
-    }
 
     const progressBar = createIndeterminateProgressBar({
       label: `Installing ${server.name}...`
@@ -114,26 +85,7 @@ export async function installServers(
   console.log(`Use ${chalk.bold('/mcp')} in Claude Code to check server status\n`);
 }
 
-function getWarningMessage(server: MCPServer, scope: InstallScope): string {
-  const warnings: Record<string, Record<InstallScope, string>> = {
-    postgresql: {
-      user: 'All projects will share the same database connection',
-      project: '',
-    },
-    supabase: {
-      user: 'All projects will share the same Supabase instance',
-      project: '',
-    },
-    jupyter: {
-      user: 'Virtual environments and dependencies may conflict across projects',
-      project: '',
-    },
-  };
 
-  return (
-    warnings[server.id]?.[scope] || `${server.name} works best at ${server.preferredScope} level`
-  );
-}
 
 async function installServerViaClaude(
   server: MCPServer,

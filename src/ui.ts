@@ -159,9 +159,30 @@ async function getInstalledServersByScope(): Promise<{ user: Set<string>; projec
 
   // Then get all servers from claude mcp list
   try {
-    progressBar.updateLabel('Connecting to Claude MCP...');
+    // Rotating messages for better UX
+    const messages = [
+      'Connecting to Claude MCP...',
+      'Checking your installed servers...',
+      'Retrieving server configurations...',
+      'Almost there, finalizing the server list...',
+      'Setting up your MCP environment...'
+    ];
+    let messageIndex = 0;
+
+    // Update message immediately
+    progressBar.updateLabel(messages[0]);
+
+    // Set up rotating messages
+    const messageInterval = setInterval(() => {
+      messageIndex = (messageIndex + 1) % messages.length;
+      progressBar.updateLabel(messages[messageIndex]);
+    }, 2500); // Change message every 2.5 seconds
+
     const { execa } = await import('execa');
     const { stdout } = await execa('claude', ['mcp', 'list']);
+
+    // Clear the interval after the command completes
+    clearInterval(messageInterval);
 
     progressBar.updateLabel('Parsing installed servers...');
     // Parse the output to get installed servers
@@ -259,18 +280,10 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
           ? chalk.blue(` (installed in ${scope === 'user' ? 'project' : 'user'})`)
           : '';
 
-        // Show project-only or scope preference indicators
-        let scopeIndicator = '';
-        if (server.forceProjectScope) {
-          scopeIndicator = chalk.red(' 🔒 Project-only');
-        } else if (server.preferredScope === 'project') {
-          scopeIndicator = chalk.yellow(' 📁 Prefers project');
-        } else if (server.preferredScope === 'user') {
-          scopeIndicator = chalk.cyan(' 👤 Prefers user');
-        }
+
 
         choices.push({
-          name: `${icon} ${server.name}${recommended}${scopeIndicator}${requiresConfig}${otherScopeNote}`,
+          name: `${icon} ${server.name}${recommended}${requiresConfig}${otherScopeNote}`,
           value: server.id,
           checked: server.recommended && !isInstalledInOtherScope,
         });

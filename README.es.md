@@ -2,6 +2,12 @@
 
 <div align="center">
 
+![gomcp](gomcp.png)
+
+</div>
+
+<div align="center">
+
 [English](README.md) | [한국어](README.ko.md) | [日本語](README.ja.md) | [简体中文](README.zh.md) | [Español](README.es.md)
 
 </div>
@@ -14,6 +20,8 @@
 > 🚀 **¡Go MCP!** - De cero a superpoderes de IA en 30 segundos. Elige tus herramientas, nosotros nos encargamos del resto.
 > 
 > 🌐 **Soporte Multiidioma** - Todo el proceso de configuración de MCP está disponible en español, inglés, coreano, japonés y chino. ¡Cambia el idioma cuando quieras!
+>
+> 📌 **Calidad Curada** - Seleccionamos cuidadosamente solo los servidores MCP más útiles y versátiles. Calidad sobre cantidad.
 
 ## Tabla de Contenidos
 

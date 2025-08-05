@@ -29,6 +29,7 @@ describe('Servers', () => {
           'jobs',
           'utilities',
           'meta',
+          'aws',
         ]).toContain(server.category);
 
         // 설정이 필요한 서버는 configOptions가 있어야 함
@@ -86,6 +87,8 @@ describe('Servers', () => {
       expect(presets.recommended).toContain('github');
       expect(presets.recommended).toContain('filesystem');
       expect(presets.recommended).toContain('context7');
+      expect(presets.recommended).toContain('sequential-thinking');
+      expect(presets.recommended).toContain('serena');
     });
   });
 });
