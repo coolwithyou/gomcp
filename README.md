@@ -19,6 +19,8 @@
 > 🚀 **Go MCP!** - From zero to AI superpowers in 30 seconds. Pick your tools, we'll handle the rest.
 > 
 > 🌐 **Multi-language Support** - The entire MCP setup process is available in English, Korean, Japanese, Chinese, and Spanish. Change language anytime!
+>
+> 📌 **Curated Quality** - We carefully select only the most useful and versatile MCP servers. Quality over quantity.
 
 
 ## Table of Contents
@@ -217,106 +219,39 @@ gomcp --help
 3. Team members who clone the project will see the `.mcp.json` and can approve the servers
 4. Use `claude mcp reset-project-choices` to reset approval decisions
 
-### Project-only vs User-level MCP Servers
 
-Some MCP servers are designed to work best (or exclusively) at the project level:
-
-#### 🔒 Project-only Servers
-These servers **must** be installed at the project level:
-- **Serena**: Maintains project-specific code memory and context
-- **Memory Bank**: Stores persistent memory per project
-
-#### 📁 Project-preferred Servers
-These servers work best at the project level but can be installed globally with `--force`:
-- **PostgreSQL**: Database connections should be project-specific
-- **Supabase**: Each project typically uses its own Supabase instance
-- **Jupyter**: Virtual environments and dependencies are project-specific
-
-#### 👤 User-preferred Servers
-These servers work best at the user level for convenience:
-- **GitHub**: Use the same GitHub token across all projects
-- **File System**: Access common directories from any project
-- **Context7**: Documentation lookup works the same everywhere
-
-When installing a server at a non-recommended scope, gomcp will warn you about potential issues. Use the `--force` flag to override these warnings if you understand the implications.
 
 ## Available MCP Servers
 
+gomcp provides a carefully curated selection of high-quality MCP servers. We prioritize servers that are:
+- **Universally useful** - Tools that benefit most developers
+- **Well-maintained** - Active development and good documentation
+- **Stable** - Reliable performance with minimal issues
+- **Complementary** - Each server offers unique value
+
 ### Essential
-- 🧠 **Sequential Thinking** - Break down complex tasks into logical steps
-- 🛠️ **Serena** - Powerful coding agent toolkit with semantic retrieval and editing
-- 📚 **Context7** - Access up-to-date documentation and code examples for libraries
 - 🐙 **GitHub** - Connect to GitHub API for issues, PRs, and CI/CD
 - 📁 **File System** - Read and write files on your machine
+- 📚 **Context7** - Access up-to-date documentation and code examples for libraries
+- 🧠 **Sequential Thinking** - Break down complex tasks into logical steps
+- 🛠️ **Serena** - Powerful coding agent toolkit with semantic retrieval and editing
 
 ### Development
 - 🐘 **PostgreSQL** - Query PostgreSQL databases with natural language
-- 🌐 **Puppeteer** - Automate web browser interactions and testing
-- 🎭 **Playwright** - Cross-browser automation with accessibility tree
+- 🌐 **Puppeteer** - Browser automation and web scraping
 - 🐳 **Docker** - Manage containers, images, and Docker workflows
-- 🔧 **Browser Tools** - Monitor browser logs and automate browser tasks
-- 🌐 **Chrome** - Control Chrome browser with 20+ tools for automation
-- 🎨 **Figma** - Design-to-code workflow integration
-- 🍃 **Supabase** - Manage Supabase databases and authentication
 
 ### Productivity
-- 💬 **Slack** - Integrate with Slack for team communication
+- 💬 **Slack** - Send messages and manage Slack workspaces
 - 📝 **Notion** - Access and manage Notion workspaces
-- 💾 **Memory Bank** - Persistent memory across Claude sessions
-- 📧 **Email** - Send emails and manage attachments
-- 📊 **Google Suite** - Access Google Docs, Sheets, and Drive
-- 📈 **Excel** - Create and modify Excel files
+- 💾 **Memory** - Long-term memory and knowledge graph
 
-### Data & Analytics
+### Data & Search
 - 📊 **Jupyter** - Execute code in Jupyter notebooks
-- 🔬 **Everything Search** - Fast file searching across operating systems
-- 🌍 **EVM** - Comprehensive blockchain services for 30+ EVM networks
-- 🔑 **Redis** - Database operations and caching microservice
+- 🦆 **DuckDuckGo** - Privacy-focused web search
 
-### Search & Web
-- 🦆 **DuckDuckGo** - Privacy-focused web search without API keys
-- 🦁 **Brave Search** - Privacy-focused web search with API
-- 📸 **Screenshot** - Capture website screenshots with advanced features
-
-### Automation & Integration
-- ⚡ **Zapier** - Automate workflows across 5,000+ apps
-- 💳 **Stripe** - Integrate with Stripe payment APIs
-- 🎥 **YouTube** - Extract YouTube video metadata and transcripts
-- 🔌 **Discord** - Bot automation for Discord servers
-
-### AI & ML
-- 🤖 **Replicate** - Search, run, and manage machine learning models
-- 🧠 **Hyperbolic** - Interact with Hyperbolic's GPU cloud services
-- 📈 **Databricks** - SQL queries and job management for Databricks
-
-### DevOps & Infrastructure
-- ☸️ **Kubernetes (mcp-k8s-go)** - Browse Kubernetes pods, logs, events, and namespaces
-- 📊 **HAProxy** - Manage and monitor HAProxy configurations
-- 🌐 **Netbird** - Analyze Netbird network peers, groups, and policies
-- 🔥 **OPNSense** - OPNSense firewall management and API access
-
-### Domain & Security
-- 🔍 **Domain Tools** - Comprehensive domain analysis with WHOIS and DNS
-- 📡 **Splunk** - Access to Splunk saved searches, alerts, and indexes
-
-### Blockchain & Crypto
-- 🟣 **Solana Agent Kit** - Interact with Solana blockchain (40+ protocol actions)
-- ⚡ **EVM** - Multi-chain EVM blockchain integration
-
-### Job & Career
-- 💼 **Reed Jobs** - Search and retrieve job listings from Reed.co.uk
-
-### Time & Utilities
-- ⏰ **Time** - Get current time and convert between timezones
-- 🔧 **Everything** - Fast file searching with comprehensive features
-
-### Meta Tools
-- 🛠️ **MCP Compass** - Suggest appropriate MCP servers for specific needs
-- 🏗️ **MCP Server Creator** - Generate other MCP servers dynamically
-- 📦 **MCP Installer** - Install other MCP servers
-- 🔄 **MCP Proxy** - Aggregate multiple MCP resource servers
-
-### And many more...
+### Utilities
+- ⏰ **Time** - Get current time and timezone info
 
 Run `gomcp --list` to see all available servers with descriptions.
 
@@ -328,9 +263,9 @@ Quick installation of common server combinations:
 | -------------- | -------------------------------------------------- | ------------------------------------ |
 | `recommended`  | GitHub, File System, Sequential Thinking, Context7 | Getting started with essential tools |
 | `dev`          | All recommended + PostgreSQL, Docker, Puppeteer    | Full development environment         |
-| `data`         | Jupyter, Excel, SciPy, PostgreSQL                  | Data analysis and visualization      |
+| `data`         | Jupyter, PostgreSQL, DuckDuckGo                    | Data analysis and research           |
 | `web`          | Puppeteer, File System, GitHub                     | Web development and automation       |
-| `productivity` | Slack, Notion, Memory Bank, Email                  | Team collaboration                   |
+| `productivity` | Slack, Notion, Memory                              | Team collaboration                   | Team collaboration                   |
 
 ## Configuration
 
