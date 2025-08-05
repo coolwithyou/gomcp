@@ -1,3 +1,17 @@
+## [v2.0.0] - 2025-08-05
+
+### Features
+
+- add automatic activation prompt after MCP server installation
+- Add AWS server support and improve user experience (#9)
+
+### Chores
+
+- remove dist directory from git tracking
+- 0.14.2
+
+
+
 ## [v1.0.0] - 2025-08-05
 
 ### 🎉 Major Release - Production Ready
