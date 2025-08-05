@@ -555,30 +555,6 @@ export const servers: MCPServer[] = [
       },
     ],
   },
-  {
-    id: 'pricing',
-    name: 'AWS Pricing',
-    description: 'AWS pricing and cost forecasting functionality',
-    detailedDescription: [
-      'Get real-time AWS service pricing information',
-      'Forecast costs for planned infrastructure',
-    ],
-    category: 'aws',
-    package: 'awslabs.aws-pricing-mcp-server',
-    command: 'uvx',
-    args: ['--from', 'awslabs.aws-pricing-mcp-server@latest', 'awslabs.aws-pricing-mcp-server'],
-    requiresConfig: true,
-    configOptions: [
-      {
-        key: 'AWS_PROFILE',
-        type: 'string',
-        label: 'AWS Profile',
-        description: 'AWS profile to use for authentication',
-        required: false,
-        default: 'default',
-      },
-    ],
-  },
 ];
 
 // Presets

@@ -264,7 +264,6 @@ gomcp provides a carefully curated selection of high-quality MCP servers. We pri
 - 🗄️ **Amazon RDS/Aurora** - Database interaction and query capabilities
 - 📊 **S3 Tables** - S3-based table management and SQL queries
 - 🚀 **ElastiCache** - Redis and Memcached cluster management
-- 💵 **AWS Pricing** - Real-time pricing and cost forecasting
 
 Run `gomcp --list` to see all available servers with descriptions.
 
