@@ -24,8 +24,6 @@ export interface MCPServer {
   requiresConfig: boolean;
   configOptions?: ConfigOption[];
   recommended?: boolean;
-  preferredScope?: 'user' | 'project' | 'both';
-  forceProjectScope?: boolean;
 }
 
 export interface ConfigOption {
