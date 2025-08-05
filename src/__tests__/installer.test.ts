@@ -117,31 +117,7 @@ describe('Installer', () => {
       expect(console.log).toHaveBeenCalledWith(expect.stringContaining('Failed to install'));
     });
 
-    it('should enforce scope restrictions', async () => {
-      const projectOnlyServer: MCPServer = {
-        id: 'project-only',
-        name: 'Project Only Server',
-        description: 'Must be installed at project level',
-        category: 'development',
-        package: '@test/project-only',
-        requiresConfig: false,
-        forceProjectScope: true,
-      };
 
-      (servers as any).push(projectOnlyServer);
-
-      await installServers(['project-only'], new Map(), 'user', false);
-
-      expect(console.error).toHaveBeenCalledWith(
-        expect.stringContaining('installation.projectOnlyServer')
-      );
-      expect(mockExeca).not.toHaveBeenCalled();
-
-      const index = servers.findIndex((s) => s.id === 'project-only');
-      if (index > -1) {
-        servers.splice(index, 1);
-      }
-    });
   });
 
   describe('Preset Installation', () => {

@@ -86,6 +86,8 @@ describe('Servers', () => {
       expect(presets.recommended).toContain('github');
       expect(presets.recommended).toContain('filesystem');
       expect(presets.recommended).toContain('context7');
+      expect(presets.recommended).toContain('sequential-thinking');
+      expect(presets.recommended).toContain('serena');
     });
   });
 });
