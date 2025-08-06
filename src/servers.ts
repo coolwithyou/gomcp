@@ -158,7 +158,7 @@ export const servers: MCPServer[] = [
       'Essential for containerized development workflows',
     ],
     category: 'development',
-    package: '@modelcontextprotocol/server-docker',
+    package: 'mcp-server-docker',
     requiresConfig: false,
   },
   {
@@ -182,6 +182,34 @@ export const servers: MCPServer[] = [
         validate: (value: unknown) => {
           if (!value || typeof value !== 'string') {
             return 'Personal Access Token is required';
+          }
+          return true;
+        },
+      },
+    ],
+  },
+  {
+    id: 'figma',
+    name: 'Figma',
+    description: 'Access Figma design layouts and components',
+    detailedDescription: [
+      'Retrieve layout information from Figma designs',
+      'Helps AI understand UI structure and design context',
+    ],
+    category: 'development',
+    package: 'figma-developer-mcp',
+    requiresConfig: true,
+    args: ['--stdio'],
+    configOptions: [
+      {
+        key: 'FIGMA_API_KEY',
+        type: 'password',
+        label: 'Figma API Access Token',
+        description: 'Generate from Figma Settings > Account > Personal access tokens',
+        required: true,
+        validate: (value: unknown) => {
+          if (!value || typeof value !== 'string') {
+            return 'Figma API key is required';
           }
           return true;
         },
@@ -242,7 +270,7 @@ export const servers: MCPServer[] = [
       'Perfect for knowledge management and documentation',
     ],
     category: 'productivity',
-    package: '@modelcontextprotocol/server-notion',
+    package: '@notionhq/notion-mcp-server',
     requiresConfig: true,
     configOptions: [
       {
@@ -273,47 +301,11 @@ export const servers: MCPServer[] = [
     requiresConfig: false,
   },
 
-  // Data & Analytics
-  {
-    id: 'jupyter',
-    name: 'Jupyter',
-    description: 'Execute code in Jupyter notebooks',
-    detailedDescription: [
-      'Run Python code and data analysis in notebooks',
-      'Perfect for data science and research workflows',
-    ],
-    category: 'data',
-    package: '@modelcontextprotocol/server-jupyter',
-    requiresConfig: false,
-  },
 
-  // Search & Web
-  {
-    id: 'duckduckgo',
-    name: 'DuckDuckGo',
-    description: 'Privacy-focused web search',
-    detailedDescription: [
-      'Search the web without tracking',
-      'Get instant answers and web results',
-    ],
-    category: 'search',
-    package: '@modelcontextprotocol/server-duckduckgo',
-    requiresConfig: false,
-  },
 
-  // Utilities
-  {
-    id: 'time',
-    name: 'Time',
-    description: 'Get current time and timezone info',
-    detailedDescription: [
-      'Access current time across timezones',
-      'Useful for scheduling and time-based calculations',
-    ],
-    category: 'utilities',
-    package: '@modelcontextprotocol/server-time',
-    requiresConfig: false,
-  },
+
+
+
 
   // AWS - Cloud infrastructure and services
   {
@@ -545,7 +537,7 @@ export const servers: MCPServer[] = [
 export const presets: Record<string, string[]> = {
   recommended: ['github', 'filesystem', 'context7', 'sequential-thinking', 'serena'],
   dev: ['github', 'filesystem', 'context7', 'sequential-thinking', 'postgresql', 'docker', 'puppeteer'],
-  data: ['jupyter', 'postgresql', 'duckduckgo'],
+  data: ['postgresql'],
   web: ['puppeteer', 'filesystem', 'github'],
   productivity: ['slack', 'notion', 'memory'],
   aws: ['ore', 'aws-documentation', 'cdk-mcp-server', 'amazon-ecs', 'lambda-tool'],

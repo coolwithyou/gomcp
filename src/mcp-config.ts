@@ -93,6 +93,19 @@ export async function addProjectServer(server: MCPServer, config?: ServerConfig)
     }
   }
 
+  // Handle Figma API key configuration
+  if (server.id === 'figma' && config?.FIGMA_API_KEY) {
+    if (serverConfig.args) {
+      // Insert the API key before --stdio
+      const stdioIndex = serverConfig.args.indexOf('--stdio');
+      if (stdioIndex > -1) {
+        serverConfig.args.splice(stdioIndex, 0, `--figma-api-key=${config.FIGMA_API_KEY}`);
+      } else {
+        serverConfig.args.push(`--figma-api-key=${config.FIGMA_API_KEY}`);
+      }
+    }
+  }
+
   // Add environment variables
   if (config) {
     const env: Record<string, string> = {};
