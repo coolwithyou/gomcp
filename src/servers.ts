@@ -170,34 +170,18 @@ export const servers: MCPServer[] = [
       'Perfect for full-stack development with real-time features',
     ],
     category: 'development',
-    package: '@modelcontextprotocol/server-supabase',
+    package: '@supabase/mcp-server-supabase',
     requiresConfig: true,
     configOptions: [
       {
-        key: 'SUPABASE_URL',
-        type: 'text',
-        label: 'Project URL',
-        description: 'Your Supabase project URL (https://xxx.supabase.co)',
-        required: true,
-        validate: (value: unknown) => {
-          if (!value || typeof value !== 'string') {
-            return 'Supabase URL is required';
-          }
-          if (!value.includes('.supabase.co')) {
-            return 'Invalid Supabase URL format';
-          }
-          return true;
-        },
-      },
-      {
-        key: 'SUPABASE_SERVICE_ROLE_KEY',
+        key: 'SUPABASE_ACCESS_TOKEN',
         type: 'password',
-        label: 'Service Role Key',
-        description: 'Service role key from project settings',
+        label: 'Personal Access Token',
+        description: 'Generate from Supabase dashboard settings (Account > Access Tokens)',
         required: true,
         validate: (value: unknown) => {
           if (!value || typeof value !== 'string') {
-            return 'Service role key is required';
+            return 'Personal Access Token is required';
           }
           return true;
         },
