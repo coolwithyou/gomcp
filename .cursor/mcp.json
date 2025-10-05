@@ -1,0 +1,20 @@
+{
+  "mcpServers": {
+    "chrome-mcp-stdio": {
+      "command": "npx",
+      "args": [
+        "node",
+        "/Users/ffgg/Library/pnpm/global/5/node_modules/mcp-chrome-bridge/dist/mcp/mcp-server-stdio.js"
+      ]
+    },
+    "supabase": {
+      "type": "stdio",
+      "command": "npx",
+      "args": [
+        "-y",
+        "@supabase/mcp-server-supabase",
+        "--access-token=FjjgXWv7HgSwefu6VPgmSCwqbEBPIaMc4o8EL2NH/ZWF1RcTO7pNdOu4t1gXRmg4ElPXs9nuj2wqznCPM0G4Og=="
+      ]
+    }
+  }
+}

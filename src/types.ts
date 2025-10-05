@@ -4,27 +4,30 @@ export interface MCPServer {
   description: string;
   detailedDescription?: string[];
   category:
-    | 'essential'
-    | 'development'
-    | 'productivity'
-    | 'data'
-    | 'automation'
-    | 'social'
-    | 'search'
-    | 'ai'
-    | 'devops'
-    | 'security'
-    | 'blockchain'
-    | 'jobs'
-    | 'utilities'
-    | 'meta'
-    | 'aws';
+  | 'essential'
+  | 'development'
+  | 'productivity'
+  | 'data'
+  | 'automation'
+  | 'social'
+  | 'search'
+  | 'ai'
+  | 'devops'
+  | 'security'
+  | 'blockchain'
+  | 'jobs'
+  | 'utilities'
+  | 'meta'
+  | 'aws';
   package: string;
   command?: string;
   args?: string[];
   requiresConfig: boolean;
   configOptions?: ConfigOption[];
   recommended?: boolean;
+  // HTTP connection support
+  httpUrl?: string;
+  connectionType?: 'stdio' | 'http';
 }
 
 export interface ConfigOption {
@@ -49,5 +52,19 @@ export interface InstallResult {
 }
 
 export type Preset = 'recommended' | 'dev' | 'data' | 'web' | 'productivity';
+
+// Tool type for supporting multiple AI coding assistants
+export enum ToolType {
+  CLAUDE = 'claude',
+  CURSOR = 'cursor',
+  BOTH = 'both',
+}
+
+export interface ToolConfig {
+  type: ToolType;
+  globalConfigPath: string;
+  projectConfigPath: string;
+  configFileName: string;
+}
 
 export type InstallScope = 'user' | 'project';

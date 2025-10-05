@@ -4,10 +4,11 @@ import chalk from 'chalk';
 import { MCPServer, ServerConfig } from './types.js';
 
 export interface MCPServerConfig {
-  type: 'stdio';
-  command: string;
+  type: 'stdio' | 'streamableHttp';
+  command?: string;
   args?: string[];
   env?: Record<string, string>;
+  url?: string; // For HTTP connections
 }
 
 export interface ProjectMCPConfig {
@@ -59,23 +60,37 @@ export async function addProjectServer(server: MCPServer, config?: ServerConfig)
   }
 
   // Build server configuration
-  const serverConfig: MCPServerConfig = {
+  const isHttpConnection = server.connectionType === 'http' && config?.CONNECTION_TYPE !== 'stdio';
+  const serverConfig: MCPServerConfig = isHttpConnection ? {
+    type: 'streamableHttp',
+    url: server.httpUrl || 'http://127.0.0.1:12306/mcp',
+  } : {
     type: 'stdio',
     command: server.command || 'npx',
     args: [],
   };
 
-  // Build command arguments
-  if (server.command) {
-    // Custom command (e.g., uvx for Serena)
-    if (server.args) {
-      serverConfig.args = [...server.args];
+  // Build command arguments (only for STDIO connections)
+  if (serverConfig.type === 'stdio') {
+    if (server.command) {
+      // Custom command (e.g., uvx for Serena)
+      if (server.args) {
+        serverConfig.args = [...server.args];
+      }
+    } else {
+      // Default to npx
+      serverConfig.args = ['-y', server.package];
+      if (server.args) {
+        serverConfig.args.push(...server.args);
+      }
     }
-  } else {
-    // Default to npx
-    serverConfig.args = ['-y', server.package];
-    if (server.args) {
-      serverConfig.args.push(...server.args);
+
+    // Special handling for Chrome MCP STDIO connection
+    if (server.id === 'chrome' && config?.CONNECTION_TYPE === 'stdio') {
+      // Use the actual STDIO server path for Chrome MCP
+      serverConfig.command = 'node';
+      // This path will be dynamically determined based on the global installation
+      serverConfig.args = ['$(npm list -g mcp-chrome-bridge --parseable)/node_modules/mcp-chrome-bridge/dist/mcp/mcp-server-stdio.js'];
     }
   }
 
@@ -107,8 +122,16 @@ export async function addProjectServer(server: MCPServer, config?: ServerConfig)
     }
   }
 
-  // Add environment variables
-  if (config) {
+  // Handle Supabase configuration - use --access-token argument due to Claude Code env bug
+  if (server.id === 'supabase' && config?.SUPABASE_ACCESS_TOKEN) {
+    if (serverConfig.args) {
+      const token = String(config.SUPABASE_ACCESS_TOKEN);
+      serverConfig.args.push(`--access-token=${token}`);
+    }
+  }
+
+  // Add environment variables (except for Supabase which uses args due to Claude Code bug)
+  if (config && server.id !== 'supabase') {
     const env: Record<string, string> = {};
     for (const [key, value] of Object.entries(config)) {
       if (key !== 'paths') {

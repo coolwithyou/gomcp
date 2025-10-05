@@ -9,14 +9,17 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import { servers, presets } from './servers.js';
 import { MCPServer, ServerConfig, InstallResult, InstallScope } from './types.js';
-import { addProjectServer, removeProjectServer } from './mcp-config.js';
+import { removeProjectServer } from './mcp-config.js';
 import { t } from './i18n/index.js';
+import { ChromeExtensionInstaller } from './utils/chrome-extension-installer.js';
+import { ChromeAutomation } from './utils/chrome-automation.js';
 
 export async function installServers(
   serverIds: string[],
   configs: Map<string, ServerConfig>,
   scope: InstallScope = 'user',
-  _force: boolean = false
+  _force: boolean = false,
+  targetTool?: unknown
 ): Promise<void> {
   console.log(chalk.bold(`\n🚀 ${t('server.installing')}\n`));
 
@@ -37,7 +40,7 @@ export async function installServers(
 
     try {
       const config = configs.get(serverId);
-      await installServer(server, config, scope, progressBar);
+      await installServer(server, config, scope, progressBar, targetTool);
 
       progressBar.succeed(chalk.green(`${server.name} ${t('messages.installedSuccessfully')}`));
       results.push({ server, success: true });
@@ -232,33 +235,155 @@ async function installServer(
   server: MCPServer,
   config?: ServerConfig,
   scope: InstallScope = 'user',
-  progressBar?: IndeterminateProgressBar
+  progressBar?: IndeterminateProgressBar,
+  targetTool?: unknown
 ): Promise<void> {
-  // Handle project scope - write to .mcp.json AND use claude mcp add
-  if (scope === 'project') {
-    // 1. Add to .mcp.json for team sharing
-    await addProjectServer(server, config);
+  // Import config manager
+  const { addServerToTool } = await import('./config-manager.js');
+  const { ToolType } = await import('./tool-detector.js');
 
-    // 2. Also use claude mcp add for immediate activation
-    // This ensures the server is available without restarting Claude Code
-    try {
-      await installServerViaClaude(server, config, 'project', progressBar);
-    } catch (error) {
-      // If already installed, that's fine - we still want the .mcp.json
-      console.log(chalk.gray('Note: Server may already be active in Claude Code'));
-    }
+  const tool = targetTool as typeof ToolType[keyof typeof ToolType] | undefined || ToolType.CLAUDE;
 
+  // Special handling for Chrome MCP server
+  if (server.id === 'chrome') {
+    await installChromeServer(server, config, scope, progressBar, tool);
     return;
   }
 
-  // For user/local scope, use claude mcp add
-  await installServerViaClaude(server, config, scope, progressBar);
+  // Use new config manager for installation
+  await addServerToTool(tool, scope, server, config);
+
+  // For backward compatibility with Claude Code, also use claude mcp add for immediate activation
+  if (tool === ToolType.CLAUDE || tool === ToolType.BOTH) {
+    if (scope === 'project') {
+      // Also use claude mcp add for immediate activation
+      try {
+        await installServerViaClaude(server, config, 'project', progressBar);
+      } catch (error) {
+        // If already installed, that's fine
+        console.log(chalk.gray('Note: Server may already be active in Claude Code'));
+      }
+    } else {
+      await installServerViaClaude(server, config, scope, progressBar);
+    }
+  }
+}
+
+/**
+ * Chrome MCP 서버 특별 설치 프로세스
+ * 1. npm 패키지 설치 (mcp-chrome-bridge)
+ * 2. Chrome 확장 자동 다운로드 및 설치
+ * 3. 사용자 가이드 표시
+ */
+async function installChromeServer(
+  server: MCPServer,
+  config?: ServerConfig,
+  scope: InstallScope = 'user',
+  progressBar?: IndeterminateProgressBar,
+  tool?: unknown
+): Promise<void> {
+  const { addServerToTool } = await import('./config-manager.js');
+  const { ToolType } = await import('./tool-detector.js');
+
+  const targetTool = tool as typeof ToolType[keyof typeof ToolType] | undefined || ToolType.CLAUDE;
+
+  try {
+    // Step 1: Install npm package (mcp-chrome-bridge)
+    progressBar?.updateLabel('📦 Installing Chrome MCP bridge package...');
+    await addServerToTool(targetTool, scope, server, config);
+
+    // Step 2: Check if Chrome extension is already installed
+    const isExtensionInstalled = await ChromeExtensionInstaller.isExtensionInstalled();
+
+    if (!isExtensionInstalled) {
+      // Download and install Chrome extension
+      progressBar?.updateLabel('🌏 Installing Chrome extension...');
+      const extensionPath = await ChromeExtensionInstaller.installChromeExtension(progressBar);
+
+      // Show installation guide
+      console.log(''); // Add spacing
+      ChromeExtensionInstaller.showInstallationGuide(extensionPath);
+    } else {
+      // Extension already exists
+      progressBar?.updateLabel('✅ Chrome extension already installed');
+      console.log(chalk.yellow('\n🌏 Chrome extension is already installed!'));
+      console.log(chalk.gray(`   Location: ${ChromeExtensionInstaller.getExtensionPath()}`));
+      console.log(chalk.gray('   Make sure it\'s enabled in Chrome at chrome://extensions/'));
+    }
+
+    // Step 3: Install via Claude for immediate activation (if needed)
+    if (targetTool === ToolType.CLAUDE || targetTool === ToolType.BOTH) {
+      if (scope === 'project') {
+        try {
+          await installServerViaClaude(server, config, 'project', progressBar);
+        } catch (error) {
+          console.log(chalk.gray('Note: Chrome MCP server may already be active in Claude Code'));
+        }
+      } else {
+        await installServerViaClaude(server, config, scope, progressBar);
+      }
+    }
+
+    // Step 4: Check connection status and provide specific guidance
+    const connectionType = config?.CONNECTION_TYPE || 'http';
+    progressBar?.updateLabel('🔍 Checking Chrome MCP connection status...');
+
+    const diagnostics = await ChromeExtensionInstaller.getDiagnosticInfo();
+
+    console.log(chalk.cyan('\n📋 Chrome MCP Setup Status'));
+    console.log(chalk.cyan('═'.repeat(50)));
+
+    console.log(`🌏 Chrome Extension: ${diagnostics.extensionInstalled ? chalk.green('✓ Installed') : chalk.red('✗ Not Found')}`);
+    console.log(`🔗 HTTP Server: ${diagnostics.httpServerRunning ? chalk.green('✓ Running') : chalk.red('✗ Not Connected')}`);
+    console.log(`📡 Connection: ${connectionType === 'http' ? chalk.blue('HTTP (Port 12306)') : chalk.yellow('STDIO')}`);
+
+    if (connectionType === 'http' && !diagnostics.httpServerRunning) {
+      console.log(chalk.yellow('\n⚠️  HTTP Connection Issues Detected'));
+      console.log(chalk.gray('The Chrome extension may not be properly connected.'));
+    }
+
+    if (diagnostics.recommendations.length > 0) {
+      console.log(chalk.yellow('\n💡 Recommendations:'));
+      diagnostics.recommendations.forEach((rec, index) => {
+        console.log(chalk.gray(`   ${index + 1}. ${rec}`));
+      });
+    }
+
+    if (diagnostics.extensionInstalled && diagnostics.httpServerRunning) {
+      console.log(chalk.green('\n🎉 Chrome MCP is ready to use!'));
+      console.log(chalk.gray('• Run Claude Code and check /mcp status'));
+      console.log(chalk.gray('• Start automating your browser workflows!'));
+    } else {
+      console.log(chalk.yellow('\n⚡ Next Steps:'));
+      console.log('1. Complete the Chrome extension setup as guided above');
+      console.log('2. Ensure the extension shows "Connected" status');
+      console.log('3. Test connection with: gomcp --verify');
+
+      // 자동화 옵션 제공
+      console.log(chalk.cyan('\n🤖 Automation Options:'));
+      console.log('━'.repeat(50));
+
+      // 원클릭 명령어 제공
+      const oneClickCommand = ChromeAutomation.generateOneClickCommand();
+      console.log(chalk.blue('🚀 Quick Launch (Chrome with extension):'));
+      console.log(chalk.gray(`   ${oneClickCommand}`));
+
+      console.log(chalk.blue('\n🔄 Full Automation (attempt auto-install):'));
+      console.log(chalk.gray('   gomcp --auto-chrome'));
+
+      console.log(chalk.yellow('\n💡 Copy and run the Quick Launch command to start Chrome with the extension automatically!'));
+    }
+
+  } catch (error) {
+    throw new Error(`Chrome MCP installation failed: ${error}`);
+  }
 }
 
 export async function installPreset(
   presetName: string,
   scope: InstallScope = 'user',
-  force: boolean = false
+  force: boolean = false,
+  _targetTool?: unknown
 ): Promise<void> {
   const serverIds = presets[presetName];
   if (!serverIds) {
@@ -453,7 +578,10 @@ export async function verifyInstallations(): Promise<void> {
   }
 }
 
-export async function listInstalledServers(scope: InstallScope | 'all' = 'user'): Promise<void> {
+export async function listInstalledServers(
+  scope: InstallScope | 'all' = 'user',
+  _targetTool?: unknown
+): Promise<void> {
   console.log(chalk.bold('\n📋 Installed MCP Servers\n'));
 
   const progressBar = createIndeterminateProgressBar({
@@ -809,7 +937,7 @@ async function checkForUpdates(
 
       // Compare versions using semver-like comparison
       const needsUpdate = currentVersion === 'unknown' || currentVersion === 'installed' ||
-                         compareVersions(currentVersion, latestVersion.trim()) < 0;
+        compareVersions(currentVersion, latestVersion.trim()) < 0;
 
       updateInfo.set(installed.id, {
         current: currentVersion,

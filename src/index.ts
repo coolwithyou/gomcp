@@ -68,8 +68,13 @@ async function main(): Promise<void> {
     .option('-v, --verify', 'Verify installed MCP servers')
     .option('-a, --activation', 'Show MCP server activation status')
     .option('-s, --scope <scope>', 'Installation scope: user (global) or project', 'user')
+    .option('-t, --tool <tool>', 'Target tool: claude, cursor, or both')
     .option('-f, --force', 'Force installation even if scope is not recommended')
     .option('-d, --show-descriptions', 'Show server descriptions in lists')
+    .option('--sync', 'Sync configurations between Claude Code and Cursor')
+    .option('--migrate <direction>', 'Migrate config: claude-to-cursor or cursor-to-claude')
+    .option('--auto-chrome', 'Automatically install and launch Chrome MCP extension')
+    .option('--launch-chrome', 'Launch Chrome with MCP extension using CLI flags')
     .action(async (options: {
       list?: boolean;
       installed?: boolean | string;
@@ -78,10 +83,45 @@ async function main(): Promise<void> {
       activation?: boolean;
       preset?: string;
       scope: string;
+      tool?: string;
       force?: boolean;
       showDescriptions?: boolean;
+      sync?: boolean;
+      migrate?: string;
+      autoChrome?: boolean;
+      launchChrome?: boolean;
     }) => {
       try {
+        // Import tool utilities
+        const { parseToolOption, detectDefaultTool, ToolType } = await import('./tool-detector.js');
+        const { syncConfigurations, migrateConfiguration } = await import('./config-manager.js');
+
+        // Parse tool option
+        const targetTool = options.tool ? parseToolOption(options.tool) : undefined;
+
+        // Handle sync command
+        if (options.sync) {
+          await syncConfigurations();
+          return;
+        }
+
+        // Handle migration command
+        if (options.migrate) {
+          const [from, to] = options.migrate.split('-to-');
+          if (!from || !to) {
+            console.error(chalk.red('Invalid migration format. Use: claude-to-cursor or cursor-to-claude'));
+            process.exit(1);
+          }
+          const fromTool = parseToolOption(from);
+          const toTool = parseToolOption(to);
+          if (!fromTool || !toTool || fromTool === ToolType.BOTH || toTool === ToolType.BOTH) {
+            console.error(chalk.red('Invalid migration tools specified'));
+            process.exit(1);
+          }
+          await migrateConfiguration(fromTool, toTool);
+          return;
+        }
+
         if (options.list) {
           listServers(options.showDescriptions);
           return;
@@ -105,8 +145,8 @@ async function main(): Promise<void> {
         }
 
         if (options.remove) {
-          // Interactive removal
-          await mainMenu(options.scope as InstallScope, 'remove', options.showDescriptions);
+          // Interactive removal - pass tool option to mainMenu
+          await mainMenu(options.scope as InstallScope, 'remove', options.showDescriptions, targetTool);
           return;
         }
 
@@ -117,6 +157,19 @@ async function main(): Promise<void> {
 
         if (options.activation) {
           await displayActivationStatus();
+          return;
+        }
+
+        // Handle Chrome automation options
+        if (options.autoChrome) {
+          const { ChromeAutomation } = await import('./utils/chrome-automation.js');
+          await ChromeAutomation.autoInstallExtension();
+          return;
+        }
+
+        if (options.launchChrome) {
+          const { ChromeAutomation } = await import('./utils/chrome-automation.js');
+          await ChromeAutomation.launchChromeWithExtension();
           return;
         }
 
@@ -135,7 +188,7 @@ async function main(): Promise<void> {
             process.exit(1);
           }
 
-          await installPreset(options.preset, scope, options.force);
+          await installPreset(options.preset, scope, options.force, targetTool || await detectDefaultTool());
           return;
         }
 
@@ -145,7 +198,7 @@ async function main(): Promise<void> {
             `${t('messages.navigationTip')}\n`
           )
         );
-        await mainMenu(options.scope as InstallScope, undefined, options.showDescriptions);
+        await mainMenu(options.scope as InstallScope, undefined, options.showDescriptions, targetTool);
       } catch (error) {
         console.error(chalk.red('Error:'), error);
         process.exit(1);

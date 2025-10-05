@@ -49,10 +49,19 @@ function clearInstalledServersCache() {
   installedServersCache = null;
 }
 
-export async function mainMenu(defaultScope: InstallScope = 'user', mode?: string, showDescriptions?: boolean) {
+export async function mainMenu(
+  defaultScope: InstallScope = 'user',
+  mode?: string,
+  showDescriptions?: boolean,
+  targetTool?: unknown
+) {
+  // Import ToolType at runtime if needed
+  const { ToolType } = await import('./tool-detector.js');
+  const tool = targetTool as typeof ToolType[keyof typeof ToolType] | undefined;
+
   // If mode is 'remove', go directly to remove flow
   if (mode === 'remove') {
-    await removeFlow(defaultScope);
+    await removeFlow(defaultScope, tool);
     return;
   }
 
@@ -92,13 +101,13 @@ ${t('messages.goodbye')}
 
   switch (action) {
     case 'install':
-      await installFlow(defaultScope, showDescriptions);
+      await installFlow(defaultScope, showDescriptions, tool);
       break;
     case 'list':
-      await listInstalledServers('all');
+      await listInstalledServers('all', tool);
       break;
     case 'remove':
-      await removeFlow(defaultScope);
+      await removeFlow(defaultScope, tool);
       break;
     case 'update':
       await updateServers();
@@ -131,7 +140,7 @@ ${t('messages.goodbye')}
   // Return to main menu after action
   if (action !== 'exit') {
     console.log(''); // Add spacing
-    await mainMenu(defaultScope, undefined, showDescriptions);
+    await mainMenu(defaultScope, undefined, showDescriptions, targetTool);
   }
 }
 
@@ -222,7 +231,58 @@ async function getInstalledServersByScope(): Promise<{ user: Set<string>; projec
   return result;
 }
 
-async function installFlow(defaultScope: InstallScope = 'user', showDescriptions?: boolean) {
+async function installFlow(
+  defaultScope: InstallScope = 'user',
+  showDescriptions?: boolean,
+  targetTool?: unknown
+) {
+  // Import tool utilities
+  const { detectInstalledTools, getToolDisplayName, ToolType } = await import('./tool-detector.js');
+
+  // Detect or select target IDE
+  let selectedTool = targetTool as typeof ToolType[keyof typeof ToolType] | undefined;
+
+  if (!selectedTool) {
+    // Auto-detect installed IDEs
+    const installedTools = await detectInstalledTools();
+
+    if (installedTools.length === 0) {
+      console.log(chalk.yellow('⚠️  No AI coding tools detected. Defaulting to Claude Code.'));
+      selectedTool = ToolType.CLAUDE;
+    } else if (installedTools.length === 1) {
+      selectedTool = installedTools[0];
+      console.log(chalk.green(`✓ Detected ${getToolDisplayName(selectedTool)}`));
+    } else {
+      // Multiple tools detected, let user choose
+      const toolChoices = [
+        ...installedTools.map(tool => ({
+          name: `${getToolDisplayName(tool)} ${tool === ToolType.CLAUDE ? '(default)' : ''}`,
+          value: tool
+        })),
+        { name: 'Both (Install to both IDEs)', value: ToolType.BOTH }
+      ];
+
+      const toolResult = await promptWithEscape([
+        {
+          type: 'list',
+          name: 'tool',
+          message: 'Select target IDE:',
+          choices: toolChoices,
+          default: ToolType.CLAUDE
+        }
+      ]);
+
+      if (!toolResult) {
+        return; // User pressed ESC
+      }
+
+      selectedTool = toolResult.tool;
+    }
+  }
+
+  console.log(chalk.blue(`Installing to: ${getToolDisplayName(selectedTool as typeof ToolType[keyof typeof ToolType])}
+`));
+
   // Ask for installation scope first
   const scopeResult = await promptWithEscape([
     {
@@ -360,7 +420,7 @@ async function installFlow(defaultScope: InstallScope = 'user', showDescriptions
   const { confirm } = confirmResult;
 
   if (confirm) {
-    await installServers(selectedServers, configs, scope as InstallScope, false);
+    await installServers(selectedServers, configs, scope as InstallScope, false, selectedTool);
     clearInstalledServersCache(); // Clear cache after installation
   } else {
     console.log(chalk.yellow('\nInstallation cancelled.'));
@@ -584,7 +644,7 @@ async function restoreFlow() {
   }
 }
 
-async function removeFlow(_defaultScope: InstallScope = 'user') {
+async function removeFlow(_defaultScope: InstallScope = 'user', _targetTool?: unknown) {
   // Show loading progress bar while fetching installed servers
   const progressBar = createIndeterminateProgressBar({
     label: 'Loading installed MCP servers...'

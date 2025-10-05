@@ -105,6 +105,44 @@ export const servers: MCPServer[] = [
       },
     ],
   },
+  {
+    id: 'chrome',
+    name: 'Chrome MCP',
+    description: 'Browser automation, web scraping, and content analysis',
+    detailedDescription: [
+      'Chrome extension-based MCP server for comprehensive browser automation',
+      'Screenshots, network monitoring, content analysis, and web interaction',
+      'Advanced browser control with semantic search capabilities',
+    ],
+    category: 'essential',
+    package: 'mcp-chrome-bridge',
+    connectionType: 'http',
+    httpUrl: 'http://127.0.0.1:12306/mcp',
+    requiresConfig: true,
+    recommended: true,
+    configOptions: [
+      {
+        key: 'AUTO_INSTALL_EXTENSION',
+        type: 'boolean',
+        label: 'Automatically download Chrome extension?',
+        description: 'Extension will be downloaded and you\'ll be guided through the Chrome loading process',
+        required: false,
+        default: true,
+      },
+      {
+        key: 'CONNECTION_TYPE',
+        type: 'select',
+        label: 'Connection Method',
+        description: 'Choose how to connect to Chrome MCP server',
+        required: true,
+        default: 'http',
+        choices: [
+          { label: 'HTTP (Recommended)', value: 'http' },
+          { label: 'STDIO (Alternative)', value: 'stdio' },
+        ],
+      },
+    ],
+  },
 
   // Development - Essential tools for software development
   {
@@ -171,6 +209,8 @@ export const servers: MCPServer[] = [
     ],
     category: 'development',
     package: '@supabase/mcp-server-supabase',
+    // Note: Supabase MCP server doesn't use --stdio flag, it uses stdio by default
+    args: [], // No args needed, server reads from env vars
     requiresConfig: true,
     configOptions: [
       {
@@ -535,10 +575,10 @@ export const servers: MCPServer[] = [
 
 // Presets
 export const presets: Record<string, string[]> = {
-  recommended: ['github', 'filesystem', 'context7', 'sequential-thinking', 'serena'],
+  recommended: ['github', 'filesystem', 'context7', 'sequential-thinking', 'serena', 'chrome'],
   dev: ['github', 'filesystem', 'context7', 'sequential-thinking', 'postgresql', 'docker', 'puppeteer'],
   data: ['postgresql'],
-  web: ['puppeteer', 'filesystem', 'github'],
+  web: ['puppeteer', 'filesystem', 'github', 'chrome'],
   productivity: ['slack', 'notion', 'memory'],
   aws: ['ore', 'aws-documentation', 'cdk-mcp-server', 'amazon-ecs', 'lambda-tool'],
 };
